@@ -3,47 +3,47 @@
 extern FILE* yyin;
 extern char* yytext;
 extern int yylineno;
+
+int yylex();
+void yyerror(const char *s);
+
 %}
-%token ID TIP BGIN END ASSIGN NR 
+%token ID TIP LOGICAL_OPERATOR MAIN ASSIGN NR 
 %start progr
 %%
 progr: declaratii bloc {printf("program corect sintactic\n");}
      ;
 
-declaratii :  declaratie ';'
+declaratii:  declaratie ';'
 	   | declaratii declaratie ';'
 	   ;
-declaratie : TIP ID 
-           | TIP ID '(' lista_param ')'
-           | TIP ID '(' ')'
+declaratie: TIP corp_declaratie
            ;
-lista_param : param
-            | lista_param ','  param 
-            ;
+corp_declaratie: ID
+               | ID ASSIGN NR
+               | corp_declaratie ',' ID
+               | corp_declaratie ',' ID ASSIGN NR 
+               ;
             
-param : TIP ID
-      ; 
       
 /* bloc */
-bloc : BGIN list END  
+bloc: TIP MAIN '(' ')' '{' list '}' 
      ;
      
 /* lista instructiuni */
-list :  statement ';' 
+list:  statement ';' 
      | list statement ';'
      ;
 
 /* instructiune */
-statement: ID ASSIGN ID
-         | ID ASSIGN NR  		 
-         | ID '(' lista_apel ')'
+statement: atribuire 
          ;
+
+atribuire: ID ASSIGN NR
+          | ID ASSIGN atribuire;
         
-lista_apel : NR
-           | lista_apel ',' NR
-           ;
 %%
-void yyerror(char * s){
+void yyerror(const char * s){
 printf("eroare: %s la linia:%d\n",s,yylineno);
 }
 

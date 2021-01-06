@@ -8,7 +8,7 @@ int yylex();
 void yyerror(const char *s);
 
 %}
-%token ID TIP LOGICAL_OPERATOR MAIN ASSIGN NR 
+%token ID TIPi TIPd TIPc TIPs TIPb LOGICAL_OPERATOR MAIN ASSIGN NATURAL_NR REAL_NR CHAR STRING
 %start progr
 %%
 progr: declaratii bloc {printf("program corect sintactic\n");}
@@ -17,17 +17,17 @@ progr: declaratii bloc {printf("program corect sintactic\n");}
 declaratii:  declaratie ';'
 	   | declaratii declaratie ';'
 	   ;
-declaratie: TIP corp_declaratie
+declaratie: TIPi corp_declaratie_i
            ;
-corp_declaratie: ID
-               | ID ASSIGN NR
-               | corp_declaratie ',' ID
-               | corp_declaratie ',' ID ASSIGN NR 
+corp_declaratie_i: ID
+               | ID ASSIGN NATURAL_NR
+               | corp_declaratie_i ',' ID
+               | corp_declaratie_i ',' ID ASSIGN NATURAL_NR
                ;
             
       
 /* bloc */
-bloc: TIP MAIN '(' ')' '{' list '}' 
+bloc: TIPi MAIN '(' ')' '{' list '}'
      ;
      
 /* lista instructiuni */
@@ -39,9 +39,8 @@ list:  statement ';'
 statement: atribuire 
          ;
 
-atribuire: ID ASSIGN NR
-          | ID ASSIGN atribuire;
-        
+atribuire: ID ASSIGN NATURAL_NR
+          ;
 %%
 void yyerror(const char * s){
 printf("eroare: %s la linia:%d\n",s,yylineno);

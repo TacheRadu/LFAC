@@ -15,6 +15,7 @@
 "=="|"<"|">"|"<="|">="|"||"|"&&" {return LOGICAL_OPERATOR;}
 [0-9]|[1-9][0-9]+ {return NATURAL_NR;}
 ([0-9]|[1-9][0-9]+).[0-9][0-9]* {return REAL_NR;}
+[0-1] {return BOOL;}
 \'[0-9a-zA-Z_=+\[\]{};':",./<>?-]\' {return CHAR;}
 \"[0-9a-zA-Z_=+\[\]{};':",./<>?-]*\" {return STRING;}
 [ \t] ;

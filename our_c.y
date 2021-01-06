@@ -17,13 +17,38 @@ progr: declaratii bloc {printf("program corect sintactic\n");}
 declaratii:  declaratie ';'
 	   | declaratii declaratie ';'
 	   ;
-declaratie: TIPi corp_declaratie_i
+declaratie: TIPi corp_declaratie_i 
+          | TIPc corp_declaratie_c
+          | TIPd corp_declaratie_d
+          | TIPs corp_declaratie_s
+          | TIPb corp_declaratie_b
            ;
 corp_declaratie_i: ID
                | ID ASSIGN NATURAL_NR
-               | corp_declaratie_i ',' ID
++               | corp_declaratie_i ',' ID
                | corp_declaratie_i ',' ID ASSIGN NATURAL_NR
                ;
+corp_declaratie_c: ID
+               | ID ASSIGN CHAR
+                | corp_declaratie_c ',' ID
+               | corp_declaratie_c ',' ID ASSIGN CHAR
+               ;
+corp_declaratie_d: ID
+               | ID ASSIGN REAL_NR
+                | corp_declaratie_d ',' ID
+               | corp_declaratie_d ',' ID ASSIGN REAL_NR
+               ;
+corp_declaratie_s: ID
+               | ID ASSIGN STRING
+                | corp_declaratie_s ',' ID
+               | corp_declaratie_s ',' ID ASSIGN STRING
+               ;
+corp_declaratie_b: ID
+               | ID ASSIGN BOOL
+                | corp_declaratie_b ',' ID
+               | corp_declaratie_b ',' ID ASSIGN BOOL
+               ;
+
             
       
 /* bloc */

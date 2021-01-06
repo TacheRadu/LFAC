@@ -8,7 +8,7 @@ int yylex();
 void yyerror(const char *s);
 
 %}
-%token ID TIPi TIPd TIPc TIPs TIPb LOGICAL_OPERATOR MAIN ASSIGN NATURAL_NR REAL_NR CHAR STRING
+%token ID TIPi TIPd TIPc TIPs TIPb LOGICAL_OPERATOR MAIN ASSIGN NATURAL_NR REAL_NR CHAR STRING BOOL
 %start progr
 %%
 progr: declaratii bloc {printf("program corect sintactic\n");}
@@ -25,7 +25,7 @@ declaratie: TIPi corp_declaratie_i
            ;
 corp_declaratie_i: ID
                | ID ASSIGN NATURAL_NR
-+               | corp_declaratie_i ',' ID
+               | corp_declaratie_i ',' ID
                | corp_declaratie_i ',' ID ASSIGN NATURAL_NR
                ;
 corp_declaratie_c: ID
@@ -45,8 +45,12 @@ corp_declaratie_s: ID
                ;
 corp_declaratie_b: ID
                | ID ASSIGN BOOL
-                | corp_declaratie_b ',' ID
+               | ID ASSIGN REAL_NR
+               | ID ASSIGN NATURAL_NR
+               | corp_declaratie_b ',' ID
                | corp_declaratie_b ',' ID ASSIGN BOOL
+               | corp_declaratie_b ',' ID ASSIGN REAL_NR
+               | corp_declaratie_b ',' ID ASSIGN NATURAL_NR
                ;
 
             

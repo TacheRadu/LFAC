@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
 extern FILE* yyin;
 extern char* yytext;
 extern int yylineno;
@@ -8,7 +9,7 @@ int yylex();
 void yyerror(const char *s);
 
 %}
-%token ID TIPi TIPd TIPc TIPs TIPb LOGICAL_OPERATOR MAIN ASSIGN NATURAL_NR REAL_NR CHAR STRING BOOL
+%token ID TIPi TIPd TIPc TIPs TIPb LOGICAL_OPERATOR MAIN ASSIGN NATURAL_NR REAL_NR CHAR STRING BOOL CLASS
 %start progr
 %%
 progr: declaratii bloc {printf("program corect sintactic\n");}
@@ -22,6 +23,8 @@ declaratie: TIPi corp_declaratie_i
           | TIPd corp_declaratie_d
           | TIPs corp_declaratie_s
           | TIPb corp_declaratie_b
+          | CLASS ID
+          | ID ID  {printf("Data type not defined\n"); exit("");} 
            ;
 corp_declaratie_i: ID
                | ID ASSIGN NATURAL_NR
@@ -69,6 +72,10 @@ statement: atribuire
          ;
 
 atribuire: ID ASSIGN NATURAL_NR
+          | ID ASSIGN REAL_NR
+          | ID ASSIGN BOOL
+          | ID ASSIGN CHAR
+          | ID ASSIGN STRING
           ;
 %%
 void yyerror(const char * s){

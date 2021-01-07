@@ -11,9 +11,10 @@
 "bool" {return TIPb;}
 "main" {return MAIN;}
 "true"|"false" {return BOOL;}
-[_a-zA-Z][_a-zA-Z0-9]* {return ID;}
+"class" {return CLASS;}
 "=" {return ASSIGN;}
 "=="|"<"|">"|"<="|">="|"||"|"&&" {return LOGICAL_OPERATOR;}
+[_a-zA-Z][_a-zA-Z0-9]* {return ID;}
 [0-9]|[1-9][0-9]+ {return NATURAL_NR;}
 ([0-9]|[1-9][0-9]+).[0-9][0-9]* {return REAL_NR;}
 \'[0-9a-zA-Z_=+\[\]{};':",./<>?-]\' {return CHAR;}

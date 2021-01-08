@@ -40,7 +40,7 @@ declaratie_var: TIP corp_declaratie
 declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}'
                | TIP ID '(' ')' '{' bloc '}'
                | TIP ID '(' ')' '{' '}'
-               | CONST TIP ID '(' lista_semnatura ')' '{' bloc '}' 
+               | CONST TIP ID '(' lista_semnatura ')' '{' bloc '}'
                | CONST TIP ID '(' ')' '{' bloc '}'
                | CONST TIP ID '(' ')' '{' '}'
                | ID ID '(' lista_semnatura ')' '{' bloc '}'
@@ -90,7 +90,7 @@ lista_semnatura: membru_semnatura
 
 membru_semnatura: TIP ID
                |  CONST TIP ID
-               |  ID ID 
+               |  ID ID
                | CONST ID ID
                ;
 

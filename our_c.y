@@ -9,7 +9,7 @@ int yylex();
 void yyerror(const char *s);
 
 %}
-%token ID TIP LOGICAL_OPERATOR MAIN ASSIGN INTEGER_NR NATURAL_NR REAL_NR CHAR STRING BOOL CLASS CONST OR AND
+%token ID TIP LOGICAL_OPERATOR ASSIGN INTEGER_NR NATURAL_NR REAL_NR CHAR STRING BOOL CLASS CONST OR AND IF ELSE WHILE
 %start progr
 
 %right ASSIGN
@@ -20,18 +20,79 @@ void yyerror(const char *s);
 %left AND
 %left '!'
 %%
-progr: declaratii bloc {printf("program corect sintactic\n");}
+progr: declaratii {printf("program corect sintactic\n");}
      ;
 
-declaratii:  declaratie ';'
-	     | declaratii declaratie ';'
+declaratii:  declaratie_var ';'
+	     | declaratii declaratie_var ';'
+          | declaratie_func
+          | declaratii declaratie_func
+          | declaratie_clasa ';'
+          | declaratii declaratie_clasa ';'
 	     ;
 
-declaratie: TIP corp_declaratie
+declaratie_var: TIP corp_declaratie
           | CONST TIP atribuire_in_declaratie
           | ID corp_declaratie  {printf("Data type not defined\n(Line %d)\n", yylineno); exit('0' - '1');} 
           | CONST ID atribuire_in_declaratie
           ;
+
+declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}'
+               | TIP ID '(' ')' '{' bloc '}'
+               | TIP ID '(' ')' '{' '}'
+               | CONST TIP ID '(' lista_semnatura ')' '{' bloc '}' 
+               | CONST TIP ID '(' ')' '{' bloc '}'
+               | CONST TIP ID '(' ')' '{' '}'
+               | ID ID '(' lista_semnatura ')' '{' bloc '}'
+               | ID ID '(' ')' '{' bloc '}'
+               | ID ID '(' ')' '{' '}'
+               | CONST ID ID '(' lista_semnatura ')' '{' bloc '}'
+               | CONST ID ID '(' ')' '{' bloc '}'
+               | CONST ID ID '(' ')' '{' '}'
+               ;
+
+declaratie_clasa: CLASS ID '{' bloc_clasa '}'
+               | CLASS ID '{' '}'
+               ;
+
+bloc: declaratie_var ';'
+     |   atribuire ';'
+     |   control
+     | bloc declaratie_var ';'
+     | bloc atribuire ';'
+     | bloc control
+     ;
+
+control: if
+     | while
+     ;
+
+if: IF '(' expresie ')' '{' bloc '}'
+     | IF '(' expresie ')' '{' bloc '}' ELSE '{' bloc '}'
+     ;
+
+while: WHILE '(' expresie ')' '{' bloc '}'
+     ;
+
+bloc_clasa: declaratie_func
+          | declaratie_var ';'
+          | atribuire ';'
+          | control
+          | bloc_clasa declaratie_func
+          | bloc_clasa declaratie_var ';'
+          | bloc_clasa atribuire ';'
+          | bloc_clasa control
+          ;
+
+lista_semnatura: membru_semnatura
+               | lista_semnatura ',' membru_semnatura
+               ;
+
+membru_semnatura: TIP ID
+               |  CONST TIP ID
+               |  ID ID 
+               | CONST ID ID
+               ;
 
 corp_declaratie: ID
                | ID '[' NATURAL_NR ']'
@@ -41,44 +102,32 @@ corp_declaratie: ID
                | corp_declaratie ',' atribuire_in_declaratie
                ;
 
-expression:  REAL_NR
+expresie:  REAL_NR
           | INTEGER_NR
           | NATURAL_NR
           | BOOL
           | CHAR
           | ID
-          | expression '+' expression
-          | expression '-' expression
-          | expression '*' expression
-          | expression '/' expression
-          | '-' expression
-          | expression AND expression
-          | expression OR expression
-          | expression LOGICAL_OPERATOR expression
-          | '(' expression ')'
-          | '!' expression
+          | expresie '+' expresie
+          | expresie '-' expresie
+          | expresie '*' expresie
+          | expresie '/' expresie
+          | '-' expresie
+          | expresie AND expresie
+          | expresie OR expresie
+          | expresie LOGICAL_OPERATOR expresie
+          | '(' expresie ')'
+          | '!' expresie
           ;
 
-/* bloc */
-bloc: TIP MAIN '(' ')' '{' list '}'
-     ;
-     
-/* lista instructiuni */
-list:  statement ';' 
-     | list statement ';'
-     ;
 
-/* instructiune */
-statement: atribuire 
-         ;
-
-atribuire_in_declaratie:   ID ASSIGN expression
+atribuire_in_declaratie:   ID ASSIGN expresie
                          | ID ASSIGN STRING
                          ;
 
-atribuire:  ID ASSIGN expression
+atribuire:  ID ASSIGN expresie
           | ID ASSIGN STRING
-          | ID '[' NATURAL_NR ']' ASSIGN expression
+          | ID '[' NATURAL_NR ']' ASSIGN expresie
           | ID '[' NATURAL_NR ']' ASSIGN STRING
           ;
 %%

@@ -5,10 +5,13 @@
 %option noyywrap
 %%
 "//".* ;
-"int"|"char"|"string"|"bool"|"float"|"class" {return TIP;}
+"int"|"char"|"string"|"bool"|"float" {return TIP;}
+"class" {return CLASS;}
 "const" {return CONST;}
-"main" {return MAIN;}
 "true"|"false" {return BOOL;}
+"if" {return IF;}
+"else" {return ELSE;}
+"while" {return WHILE;};
 "=="|"<"|">"|"<="|">=" {return LOGICAL_OPERATOR;}
 "=" {return ASSIGN;}
 "||" {return OR;}

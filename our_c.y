@@ -73,6 +73,8 @@ lista_parametri: expresie
                | lista_parametri ',' expresie
                | atribuire
                | lista_parametri ',' atribuire
+               | apel_functie
+               | lista_parametri ',' apel_functie
                ;
 
 control: if

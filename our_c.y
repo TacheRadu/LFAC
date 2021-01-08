@@ -9,7 +9,7 @@ int yylex();
 void yyerror(const char *s);
 
 %}
-%token ID TIPi TIPd TIPc TIPs TIPb LOGICAL_OPERATOR MAIN ASSIGN NATURAL_NR REAL_NR CHAR STRING BOOL CLASS
+%token ID TIP LOGICAL_OPERATOR MAIN ASSIGN INTEGER_NR NATURAL_NR REAL_NR CHAR STRING BOOL CLASS
 %start progr
 %%
 progr: declaratii bloc {printf("program corect sintactic\n");}
@@ -18,48 +18,17 @@ progr: declaratii bloc {printf("program corect sintactic\n");}
 declaratii:  declaratie ';'
 	   | declaratii declaratie ';'
 	   ;
-declaratie: TIPi corp_declaratie_i 
-          | TIPc corp_declaratie_c
-          | TIPd corp_declaratie_d
-          | TIPs corp_declaratie_s
-          | TIPb corp_declaratie_b
-          | CLASS ID
-          | ID ID  {printf("Data type not defined\n"); exit("");} 
+declaratie: TIP corp_declaratie 
+          | ID corp_declaratie  {printf("Data type not defined\n(Line %d)\n", yylineno); exit('0' - '1');} 
            ;
-corp_declaratie_i: ID
-               | ID ASSIGN NATURAL_NR
-               | corp_declaratie_i ',' ID
-               | corp_declaratie_i ',' ID ASSIGN NATURAL_NR
+corp_declaratie: ID
+               | atribuire
+               | corp_declaratie ',' ID
+               | corp_declaratie ',' atribuire
                ;
-corp_declaratie_c: ID
-               | ID ASSIGN CHAR
-                | corp_declaratie_c ',' ID
-               | corp_declaratie_c ',' ID ASSIGN CHAR
-               ;
-corp_declaratie_d: ID
-               | ID ASSIGN REAL_NR
-                | corp_declaratie_d ',' ID
-               | corp_declaratie_d ',' ID ASSIGN REAL_NR
-               ;
-corp_declaratie_s: ID
-               | ID ASSIGN STRING
-                | corp_declaratie_s ',' ID
-               | corp_declaratie_s ',' ID ASSIGN STRING
-               ;
-corp_declaratie_b: ID
-               | ID ASSIGN BOOL
-               | ID ASSIGN REAL_NR
-               | ID ASSIGN NATURAL_NR
-               | corp_declaratie_b ',' ID
-               | corp_declaratie_b ',' ID ASSIGN BOOL
-               | corp_declaratie_b ',' ID ASSIGN REAL_NR
-               | corp_declaratie_b ',' ID ASSIGN NATURAL_NR
-               ;
-
-            
       
 /* bloc */
-bloc: TIPi MAIN '(' ')' '{' list '}'
+bloc: TIP MAIN '(' ')' '{' list '}'
      ;
      
 /* lista instructiuni */
@@ -71,11 +40,13 @@ list:  statement ';'
 statement: atribuire 
          ;
 
-atribuire: ID ASSIGN NATURAL_NR
+atribuire:  ID ASSIGN INTEGER_NR
+          | ID ASSIGN NATURAL_NR
           | ID ASSIGN REAL_NR
           | ID ASSIGN BOOL
           | ID ASSIGN CHAR
           | ID ASSIGN STRING
+          | ID ASSIGN ID
           ;
 %%
 void yyerror(const char * s){

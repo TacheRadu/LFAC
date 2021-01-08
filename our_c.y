@@ -9,7 +9,7 @@ int yylex();
 void yyerror(const char *s);
 
 %}
-%token ID TIP LOGICAL_OPERATOR MAIN ASSIGN INTEGER_NR NATURAL_NR REAL_NR CHAR STRING BOOL CLASS
+%token ID TIP LOGICAL_OPERATOR MAIN ASSIGN INTEGER_NR NATURAL_NR REAL_NR CHAR STRING BOOL CLASS CONST
 %start progr
 %%
 progr: declaratii bloc {printf("program corect sintactic\n");}
@@ -19,7 +19,9 @@ declaratii:  declaratie ';'
 	     | declaratii declaratie ';'
 	     ;
 declaratie: TIP corp_declaratie
+          | CONST TIP atribuire_in_declaratie
           | ID corp_declaratie  {printf("Data type not defined\n(Line %d)\n", yylineno); exit('0' - '1');} 
+          | CONST ID atribuire_in_declaratie
           ;
 corp_declaratie: ID
                | ID '[' NATURAL_NR ']'

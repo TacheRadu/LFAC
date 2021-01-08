@@ -6,6 +6,7 @@
 %%
 "//".* ;
 "int"|"char"|"string"|"bool"|"float"|"class" {return TIP;}
+"const" {return CONST;}
 "main" {return MAIN;}
 "true"|"false" {return BOOL;}
 "=" {return ASSIGN;}

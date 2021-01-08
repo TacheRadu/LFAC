@@ -16,15 +16,17 @@ progr: declaratii bloc {printf("program corect sintactic\n");}
      ;
 
 declaratii:  declaratie ';'
-	   | declaratii declaratie ';'
-	   ;
-declaratie: TIP corp_declaratie 
+	     | declaratii declaratie ';'
+	     ;
+declaratie: TIP corp_declaratie
           | ID corp_declaratie  {printf("Data type not defined\n(Line %d)\n", yylineno); exit('0' - '1');} 
-           ;
+          ;
 corp_declaratie: ID
-               | atribuire
+               | ID '[' NATURAL_NR ']'
+               | atribuire_in_declaratie
                | corp_declaratie ',' ID
-               | corp_declaratie ',' atribuire
+               | corp_declaratie ',' ID '[' NATURAL_NR ']'
+               | corp_declaratie ',' atribuire_in_declaratie
                ;
       
 /* bloc */
@@ -40,6 +42,15 @@ list:  statement ';'
 statement: atribuire 
          ;
 
+atribuire_in_declaratie:   ID ASSIGN INTEGER_NR
+                         | ID ASSIGN NATURAL_NR
+                         | ID ASSIGN REAL_NR
+                         | ID ASSIGN BOOL
+                         | ID ASSIGN CHAR
+                         | ID ASSIGN STRING
+                         | ID ASSIGN ID
+                         ;
+
 atribuire:  ID ASSIGN INTEGER_NR
           | ID ASSIGN NATURAL_NR
           | ID ASSIGN REAL_NR
@@ -47,6 +58,13 @@ atribuire:  ID ASSIGN INTEGER_NR
           | ID ASSIGN CHAR
           | ID ASSIGN STRING
           | ID ASSIGN ID
+          | ID '[' NATURAL_NR ']' ASSIGN INTEGER_NR
+          | ID '[' NATURAL_NR ']' ASSIGN NATURAL_NR
+          | ID '[' NATURAL_NR ']' ASSIGN REAL_NR
+          | ID '[' NATURAL_NR ']' ASSIGN BOOL
+          | ID '[' NATURAL_NR ']' ASSIGN CHAR
+          | ID '[' NATURAL_NR ']' ASSIGN STRING
+          | ID '[' NATURAL_NR ']' ASSIGN ID
           ;
 %%
 void yyerror(const char * s){

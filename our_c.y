@@ -9,12 +9,16 @@ int yylex();
 void yyerror(const char *s);
 
 %}
-%token ID TIP LOGICAL_OPERATOR MAIN ASSIGN INTEGER_NR NATURAL_NR REAL_NR CHAR STRING BOOL CLASS CONST
+%token ID TIP LOGICAL_OPERATOR MAIN ASSIGN INTEGER_NR NATURAL_NR REAL_NR CHAR STRING BOOL CLASS CONST OR AND
 %start progr
 
 %right ASSIGN
 %left '+' '-'
 %left '*' '/'
+%left LOGICAL_OPERATOR
+%left OR
+%left AND
+%left '!'
 %%
 progr: declaratii bloc {printf("program corect sintactic\n");}
      ;
@@ -37,18 +41,22 @@ corp_declaratie: ID
                | corp_declaratie ',' atribuire_in_declaratie
                ;
 
-exp_aritm:  REAL_NR 
+expression:  REAL_NR
           | INTEGER_NR
           | NATURAL_NR
           | BOOL
           | CHAR
           | ID
-          | exp_aritm '+' exp_aritm
-          | exp_aritm '-' exp_aritm
-          | exp_aritm '*' exp_aritm
-          | exp_aritm '/' exp_aritm
-          | '(' exp_aritm ')'
-          | '-' exp_aritm
+          | expression '+' expression
+          | expression '-' expression
+          | expression '*' expression
+          | expression '/' expression
+          | '-' expression
+          | expression AND expression
+          | expression OR expression
+          | expression LOGICAL_OPERATOR expression
+          | '(' expression ')'
+          | '!' expression
           ;
 
 /* bloc */
@@ -64,13 +72,13 @@ list:  statement ';'
 statement: atribuire 
          ;
 
-atribuire_in_declaratie:   ID ASSIGN exp_aritm
+atribuire_in_declaratie:   ID ASSIGN expression
                          | ID ASSIGN STRING
                          ;
 
-atribuire:  ID ASSIGN exp_aritm
+atribuire:  ID ASSIGN expression
           | ID ASSIGN STRING
-          | ID '[' NATURAL_NR ']' ASSIGN exp_aritm
+          | ID '[' NATURAL_NR ']' ASSIGN expression
           | ID '[' NATURAL_NR ']' ASSIGN STRING
           ;
 %%

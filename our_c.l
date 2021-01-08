@@ -9,8 +9,10 @@
 "const" {return CONST;}
 "main" {return MAIN;}
 "true"|"false" {return BOOL;}
+"=="|"<"|">"|"<="|">=" {return LOGICAL_OPERATOR;}
 "=" {return ASSIGN;}
-"=="|"<"|">"|"<="|">="|"||"|"&&" {return LOGICAL_OPERATOR;}
+"||" {return OR;}
+"&&" {return AND;}
 [_a-zA-Z][_a-zA-Z0-9]* {return ID;}
 [0-9]|[1-9][0-9]+ {return NATURAL_NR;}
 -[1-9][0-9]* {return INTEGER_NR;}

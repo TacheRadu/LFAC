@@ -11,6 +11,10 @@ void yyerror(const char *s);
 %}
 %token ID TIP LOGICAL_OPERATOR MAIN ASSIGN INTEGER_NR NATURAL_NR REAL_NR CHAR STRING BOOL CLASS CONST
 %start progr
+
+%right ASSIGN
+%left '+' '-'
+%left '*' '/'
 %%
 progr: declaratii bloc {printf("program corect sintactic\n");}
      ;
@@ -18,11 +22,13 @@ progr: declaratii bloc {printf("program corect sintactic\n");}
 declaratii:  declaratie ';'
 	     | declaratii declaratie ';'
 	     ;
+
 declaratie: TIP corp_declaratie
           | CONST TIP atribuire_in_declaratie
           | ID corp_declaratie  {printf("Data type not defined\n(Line %d)\n", yylineno); exit('0' - '1');} 
           | CONST ID atribuire_in_declaratie
           ;
+
 corp_declaratie: ID
                | ID '[' NATURAL_NR ']'
                | atribuire_in_declaratie
@@ -30,7 +36,21 @@ corp_declaratie: ID
                | corp_declaratie ',' ID '[' NATURAL_NR ']'
                | corp_declaratie ',' atribuire_in_declaratie
                ;
-      
+
+exp_aritm:  REAL_NR 
+          | INTEGER_NR
+          | NATURAL_NR
+          | BOOL
+          | CHAR
+          | ID
+          | exp_aritm '+' exp_aritm
+          | exp_aritm '-' exp_aritm
+          | exp_aritm '*' exp_aritm
+          | exp_aritm '/' exp_aritm
+          | '(' exp_aritm ')'
+          | '-' exp_aritm
+          ;
+
 /* bloc */
 bloc: TIP MAIN '(' ')' '{' list '}'
      ;
@@ -44,29 +64,14 @@ list:  statement ';'
 statement: atribuire 
          ;
 
-atribuire_in_declaratie:   ID ASSIGN INTEGER_NR
-                         | ID ASSIGN NATURAL_NR
-                         | ID ASSIGN REAL_NR
-                         | ID ASSIGN BOOL
-                         | ID ASSIGN CHAR
+atribuire_in_declaratie:   ID ASSIGN exp_aritm
                          | ID ASSIGN STRING
-                         | ID ASSIGN ID
                          ;
 
-atribuire:  ID ASSIGN INTEGER_NR
-          | ID ASSIGN NATURAL_NR
-          | ID ASSIGN REAL_NR
-          | ID ASSIGN BOOL
-          | ID ASSIGN CHAR
+atribuire:  ID ASSIGN exp_aritm
           | ID ASSIGN STRING
-          | ID ASSIGN ID
-          | ID '[' NATURAL_NR ']' ASSIGN INTEGER_NR
-          | ID '[' NATURAL_NR ']' ASSIGN NATURAL_NR
-          | ID '[' NATURAL_NR ']' ASSIGN REAL_NR
-          | ID '[' NATURAL_NR ']' ASSIGN BOOL
-          | ID '[' NATURAL_NR ']' ASSIGN CHAR
+          | ID '[' NATURAL_NR ']' ASSIGN exp_aritm
           | ID '[' NATURAL_NR ']' ASSIGN STRING
-          | ID '[' NATURAL_NR ']' ASSIGN ID
           ;
 %%
 void yyerror(const char * s){

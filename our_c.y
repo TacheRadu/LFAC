@@ -56,12 +56,24 @@ declaratie_clasa: CLASS ID '{' bloc_clasa '}'
                ;
 
 bloc: declaratie_var ';'
-     |   atribuire ';'
-     |   control
+     | atribuire ';'
+     | control
+     | apel_functie ';'
      | bloc declaratie_var ';'
      | bloc atribuire ';'
      | bloc control
+     | bloc apel_functie ';'
      ;
+
+apel_functie: ID '(' lista_parametri ')'
+          |   ID '(' ')'
+          ;
+
+lista_parametri: expresie
+               | lista_parametri ',' expresie
+               | atribuire
+               | lista_parametri ',' atribuire
+               ;
 
 control: if
      | while
@@ -76,12 +88,8 @@ while: WHILE '(' expresie ')' '{' bloc '}'
 
 bloc_clasa: declaratie_func
           | declaratie_var ';'
-          | atribuire ';'
-          | control
           | bloc_clasa declaratie_func
           | bloc_clasa declaratie_var ';'
-          | bloc_clasa atribuire ';'
-          | bloc_clasa control
           ;
 
 lista_semnatura: membru_semnatura

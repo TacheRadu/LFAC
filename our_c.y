@@ -1,6 +1,9 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "semantics.h"
+
 extern FILE* yyin;
 extern char* yytext;
 extern int yylineno;
@@ -19,6 +22,18 @@ void yyerror(const char *s);
 %left OR
 %left AND
 %left '!'
+
+%union{
+     int nr_i;
+     char* string;
+     char character;
+     float nr_f;
+}
+
+%type <string> ID TIP LOGICAL_OPERATOR STRING CLASS CONST OR AND IF ELSE WHILE
+%type <character> ASSIGN CHAR
+%type <nr_i> INTEGER_NR NATURAL_NR BOOL
+%type <nr_f> REAL_NR expresie
 %%
 progr: declaratii {printf("program corect sintactic\n");}
      ;
@@ -112,33 +127,33 @@ corp_declaratie: ID
                | corp_declaratie ',' atribuire_in_declaratie
                ;
 
-expresie:  REAL_NR
-          | INTEGER_NR
-          | NATURAL_NR
-          | BOOL
-          | CHAR
-          | ID
-          | expresie '+' expresie
-          | expresie '-' expresie
-          | expresie '*' expresie
-          | expresie '/' expresie
-          | '-' expresie
-          | expresie AND expresie
-          | expresie OR expresie
-          | expresie LOGICAL_OPERATOR expresie
-          | '(' expresie ')'
-          | '!' expresie
+expresie:  REAL_NR {$$ = $1;}
+          | INTEGER_NR {$$ = (float)$1;}
+          | NATURAL_NR {$$ = (float)$1;}
+          | BOOL {$$ = (float)$1;}
+          | CHAR {$$ = (float)$1;}
+          | ID {$$ = 0.0f;}
+          | expresie '+' expresie {$$ = $1 + $3; printf("%f + %f = %f\n", $1, $3, $$);}
+          | expresie '-' expresie {$$ = $1 + $3; printf("%f - %f = %f\n", $1, $3, $$);}
+          | expresie '*' expresie {$$ = $1 * $3; printf("%f * %f = %f\n", $1, $3, $$);}
+          | expresie '/' expresie {$$ = $1 / $3; printf("%f / %f = %f\n", $1, $3, $$);}
+          | '-' expresie {$$ = -$2;}
+          | expresie AND expresie {$$ = $1 && $3;}
+          | expresie OR expresie {$$ = $1 || $3;}
+          | expresie LOGICAL_OPERATOR expresie {logical_operations(&$$, &$1, &$3, $2);}
+          | '(' expresie ')' {$$ = $2;}
+          | '!' expresie {$$ = !$2;}
           ;
 
 
-atribuire_in_declaratie:   ID ASSIGN expresie
-                         | ID ASSIGN STRING
+atribuire_in_declaratie:   ID ASSIGN expresie {printf("%s = %f\n", $1, $3);}
+                         | ID ASSIGN STRING {printf("%s = %s\n", $1, $3);}
                          ;
 
-atribuire:  ID ASSIGN expresie
-          | ID ASSIGN STRING
-          | ID '[' NATURAL_NR ']' ASSIGN expresie
-          | ID '[' NATURAL_NR ']' ASSIGN STRING
+atribuire:  ID ASSIGN expresie {printf("%s = %f\n", $1, $3);}
+          | ID ASSIGN STRING {printf("%s = %s\n", $1, $3);}
+          | ID '[' NATURAL_NR ']' ASSIGN expresie {printf("%s[%i] = %f\n", $1, $3, $6);}
+          | ID '[' NATURAL_NR ']' ASSIGN STRING {printf("%s[%i] = %s\n", $1, $3, $6);}
           ;
 %%
 void yyerror(const char * s){

@@ -5,12 +5,15 @@
 
 #include "semantics.h"
 
+
 extern FILE* yyin;
 extern char* yytext;
 extern int yylineno;
 
 int yylex();
 void yyerror(const char *s);
+
+struct scope *globalScope;
 
 %}
 %token ID TIP LOGICAL_OPERATOR ASSIGN INTEGER_NR NATURAL_NR REAL_NR CHAR STRING BOOL CLASS CONST OR AND IF ELSE WHILE
@@ -29,33 +32,39 @@ void yyerror(const char *s);
      char* string;
      char character;
      float nr_f;
+     struct scope* scope_t;
+     struct scope_entry* scope_entry_t;
+     struct expr_type* expr_t;
 }
 
 %type <string> ID TIP LOGICAL_OPERATOR STRING CLASS CONST OR AND IF ELSE WHILE
 %type <character> ASSIGN CHAR
 %type <nr_i> INTEGER_NR NATURAL_NR BOOL
-%type <nr_f> REAL_NR expresie
+%type <nr_f> REAL_NR
+%type <expr_t> expresie
+%type <scope_t> progr declaratii bloc bloc_clasa
+%type <scope_entry_t> declaratie_var declaratie_func declaratie_clasa corp_declaratie atribuire_in_declaratie
 %%
-progr: declaratii {printf("program corect sintactic\n");}
+progr: declaratii {printf("%d : Done\n", yylineno); globalScope = $1;printf("program corect sintactic\n");}
      ;
 
-declaratii:  declaratie_var ';'
-	     | declaratii declaratie_var ';'
-          | declaratie_func
-          | declaratii declaratie_func
-          | declaratie_clasa ';'
-          | declaratii declaratie_clasa ';'
+declaratii: declaratie_var ';' { printf("%d : Declaratie variabila\n", yylineno); $$ = scopeFromEntry($1);}
+          | declaratii declaratie_var ';' {printf("%d : Declaratii\n", yylineno); push($1, $2); $$ = $1;}
+          | declaratie_func {printf("%d : Declaratie functie\n", yylineno); $$ = scopeFromEntry($1);}
+          | declaratii declaratie_func {printf("%d : Declaratii functie\n", yylineno); push($1, $2); $$ = $1;}
+          | declaratie_clasa ';' {printf("%d : Declaratie clasa\n", yylineno); $$ = scopeFromEntry($1);}
+          | declaratii declaratie_clasa ';' {printf("%d : Declaratii clasa\n", yylineno); push($1, $2); $$ = $1;}
 	     ;
 
-declaratie_var: TIP corp_declaratie
-          | CONST TIP atribuire_in_declaratie
-          | ID corp_declaratie  {printf("Data type not defined\n(Line %d)\n", yylineno); exit('0' - '1');} 
+declaratie_var: TIP corp_declaratie {printf("%d : Declaratie\n", yylineno); set_tip($2, $1); $$ = $2;}
+          | CONST TIP atribuire_in_declaratie {printf("%d : Declaratie const\n", yylineno); $3->var.isConst = 1; $3->var.tip = strdup($2); $$ = $3;}
+          | ID corp_declaratie  {printf("%d : Declaratie class obj\n", yylineno); printf("Data type not defined\n(Line %d)\n", yylineno); exit('0' - '1');} 
           | CONST ID atribuire_in_declaratie
           ;
 
-declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}'
-               | TIP ID '(' ')' '{' bloc '}'
-               | TIP ID '(' ')' '{' '}'
+declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$->tip = 1; $$->fun.tip = strdup($1); $$->fun.id = strdup($2);}
+               | TIP ID '(' ')' '{' bloc '}' {$$->tip = 1; $$->fun.tip = strdup($1); $$->fun.id = strdup($2);}
+               | TIP ID '(' ')' '{' '}' {$$->tip = 1; $$->fun.tip = strdup($1); $$->fun.id = strdup($2);}
                | CONST TIP ID '(' lista_semnatura ')' '{' bloc '}'
                | CONST TIP ID '(' ')' '{' bloc '}'
                | CONST TIP ID '(' ')' '{' '}'
@@ -68,10 +77,10 @@ declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}'
                ;
 
 declaratie_clasa: CLASS ID '{' bloc_clasa '}'
-               | CLASS ID '{' '}'
+               |  CLASS ID '{' '}'
                ;
 
-bloc: declaratie_var ';'
+bloc:  declaratie_var ';'
      | atribuire ';'
      | control
      | apel_functie ';'
@@ -120,41 +129,41 @@ membru_semnatura: TIP ID
                | CONST ID ID
                ;
 
-corp_declaratie: ID
-               | ID '[' NATURAL_NR ']'
-               | atribuire_in_declaratie
-               | corp_declaratie ',' ID
-               | corp_declaratie ',' ID '[' NATURAL_NR ']'
-               | corp_declaratie ',' atribuire_in_declaratie
+corp_declaratie: ID {printf("%d : Corp declaratie\n", yylineno); $$ = entry($1);}
+               | ID '[' NATURAL_NR ']' {printf("%d : Corp declaratie arr\n", yylineno); $$ = entry($1, $3);}
+               | atribuire_in_declaratie {printf("%d : Corp declaratie atrib\n", yylineno); $$ = $1;}
+               | corp_declaratie ',' ID {printf("%d : Corp declaratie multipla\n", yylineno); push($1, $3); $$ = $1;}
+               | corp_declaratie ',' ID '[' NATURAL_NR ']' {push($1, $3, $5); $$ = $1;}
+               | corp_declaratie ',' atribuire_in_declaratie {add($1, $3); $$ = $1;}
                ;
 
-expresie:  REAL_NR {$$ = $1;}
-          | INTEGER_NR {$$ = (float)$1;}
-          | NATURAL_NR {$$ = (float)$1;}
-          | BOOL {$$ = (float)$1;}
-          | CHAR {$$ = (float)$1;}
-          | ID {$$ = 0.0f;}
-          | expresie '+' expresie {$$ = $1 + $3; printf("%f + %f = %f\n", $1, $3, $$);}
-          | expresie '-' expresie {$$ = $1 + $3; printf("%f - %f = %f\n", $1, $3, $$);}
-          | expresie '*' expresie {$$ = $1 * $3; printf("%f * %f = %f\n", $1, $3, $$);}
-          | expresie '/' expresie {$$ = $1 / $3; printf("%f / %f = %f\n", $1, $3, $$);}
-          | '-' expresie {$$ = -$2;}
-          | expresie AND expresie {$$ = $1 && $3;}
-          | expresie OR expresie {$$ = $1 || $3;}
-          | expresie LOGICAL_OPERATOR expresie {logical_operations(&$$, &$1, &$3, $2);}
+expresie:  REAL_NR {$$ = create_expr($1);}
+          | INTEGER_NR {$$ = create_expr($1);}
+          | NATURAL_NR {$$ = create_expr($1);}
+          | BOOL {$$ = create_expr($1, 0);}
+          | CHAR {$$ = create_expr($1);}
+          | ID {}
+          | expresie '+' expresie {$$ = expr_aritm($1, $3, $<character>2);}
+          | expresie '-' expresie {$$ = expr_aritm($1, $3, $<character>2);}
+          | expresie '*' expresie {$$ = expr_aritm($1, $3, $<character>2);}
+          | expresie '/' expresie {$$ = expr_aritm($1, $3, $<character>2);}
+          | '-' expresie {$2->val = -$2->val; $$ = $2;}
+          | expresie AND expresie {$1->tip = 2; $1->val = $1->val && $3->val; $$ = $1;}
+          | expresie OR expresie {$1->tip = 2; $1->val = $1->val || $3->val; $$ = $1;}
+          | expresie LOGICAL_OPERATOR expresie {$$ = logical_operations($1, $3, $2);}
           | '(' expresie ')' {$$ = $2;}
-          | '!' expresie {$$ = !$2;}
+          | '!' expresie {$2->tip = 2; $2->val = !$2->val; $$ = $2;}
           ;
 
 
-atribuire_in_declaratie:   ID ASSIGN expresie {printf("%s = %f\n", $1, $3);}
-                         | ID ASSIGN STRING {printf("%s = %s\n", $1, $3);}
+atribuire_in_declaratie:   ID ASSIGN expresie {printf("%d : Atribuire expresie\n", yylineno); $$ = assign($1, $3);}
+                         | ID ASSIGN STRING {printf("%d : Atribuire string\n", yylineno); $$ = assign($1, $3);}
                          ;
 
-atribuire:  ID ASSIGN expresie {printf("%s = %f\n", $1, $3);}
-          | ID ASSIGN STRING {printf("%s = %s\n", $1, $3);}
-          | ID '[' NATURAL_NR ']' ASSIGN expresie {printf("%s[%i] = %f\n", $1, $3, $6);}
-          | ID '[' NATURAL_NR ']' ASSIGN STRING {printf("%s[%i] = %s\n", $1, $3, $6);}
+atribuire:  ID ASSIGN expresie {/*printf("%s = %f\n", $1, $3->val);*/}
+          | ID ASSIGN STRING {/*printf("%s = %s\n", $1, $3);*/}
+          | ID '[' NATURAL_NR ']' ASSIGN expresie {/*printf("%s[%i] = %f\n", $1, $3, $6->val);*/}
+          | ID '[' NATURAL_NR ']' ASSIGN STRING {/*printf("%s[%i] = %s\n", $1, $3, $6);*/}
           ;
 %%
 void yyerror(const char * s){
@@ -162,6 +171,9 @@ printf("eroare: %s la linia:%d\n",s,yylineno);
 }
 
 int main(int argc, char** argv){
-yyin=fopen(argv[1],"r");
-yyparse();
+     yyin=fopen(argv[1],"r");
+
+     yyparse();
+
+     display(globalScope);
 } 

@@ -64,7 +64,8 @@ void push(struct scope *s, struct scope_entry *e){
         return;
     }
     while(it->next != NULL){
-        if(e->tip == 0 && it->tip == 0 && strcmp(e->var.id, it->var.id) == 0){
+        if((e->tip == 0 && (it->tip == 0 && strcmp(e->var.id, it->var.id) == 0 || it->tip == 1 && strcmp(e->var.id, it->fun.id) == 0)) ||
+           (e->tip == 1 && (it->tip == 0 && strcmp(e->fun.id, it->var.id) == 0 || it->tip == 1 && strcmp(e->fun.id, it->fun.id) == 0))){
             printf("%d: Redeclaration of variable\n", yylineno);
             exit(-1);
         }

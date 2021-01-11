@@ -4,7 +4,7 @@
 %}
 %option noyywrap
 %%
-"//".* ;
+"//".*
 "int"|"char"|"string"|"bool"|"float" {yylval.string = strdup(yytext); return TIP;}
 "class" {yylval.string = strdup(yytext); return CLASS;}
 "const" {yylval.string = strdup(yytext); return CONST;}

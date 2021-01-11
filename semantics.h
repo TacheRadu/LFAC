@@ -60,6 +60,8 @@ void setValue(struct scope_entry *e, int n){
 
 bool sameSign(struct sign *a, struct sign *b){
     struct sign *it1 = a, *it2 = b;
+    if((it1 == NULL && it2 != NULL) || (it1 != NULL && it2 == NULL))
+        return 0;
     while(it1 != NULL && it2 != NULL){
         if(strcmp(it1->tip, it2->tip) != 0)
             return 0;

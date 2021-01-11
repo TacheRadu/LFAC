@@ -87,6 +87,8 @@ void push(struct scope *s, struct scope_entry *e){
     }
     it->next = e;
     e->prev = it;
+    if(e->tip == 3)
+        e->scope->prev = it;
 }
 
 void push(struct scope_entry *e, char* id){

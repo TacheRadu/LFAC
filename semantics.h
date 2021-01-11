@@ -63,8 +63,13 @@ void push(struct scope *s, struct scope_entry *e){
         s->first_item = e;
         return;
     }
-    while(it->next != NULL)
+    while(it->next != NULL){
+        if(e->tip == 0 && it->tip == 0 && strcmp(e->var.id, it->var.id) == 0){
+            printf("%d: Redeclaration of variable\n", yylineno);
+            exit(-1);
+        }
         it = it->next;
+    }
     it->next = e;
     e->prev = it;
 }

@@ -1,5 +1,6 @@
 #include "scope.h"
 
+#define TAB_SIZE 5
 
 void set_tip(struct scope_entry* e, char* tip){
     struct scope_entry* it = e;
@@ -57,6 +58,17 @@ void setValue(struct scope_entry *e, int n){
     e->var.classValArr = (int*) malloc(n);
 }
 
+bool sameSign(struct sign *a, struct sign *b){
+    struct sign *it1 = a, *it2 = b;
+    while(it1 != NULL && it2 != NULL){
+        if(strcmp(it1->tip, it2->tip) != 0)
+            return 0;
+        it1 = it1->next;
+        it2 = it2->next;
+    }
+    return 1;
+}
+
 void push(struct scope *s, struct scope_entry *e){
     struct scope_entry *it = s->first_item;
     if(it == NULL){
@@ -65,7 +77,7 @@ void push(struct scope *s, struct scope_entry *e){
     }
     while(it->next != NULL){
         if((e->tip == 0 && (it->tip == 0 && strcmp(e->var.id, it->var.id) == 0 || it->tip == 1 && strcmp(e->var.id, it->fun.id) == 0)) ||
-           (e->tip == 1 && (it->tip == 0 && strcmp(e->fun.id, it->var.id) == 0 || it->tip == 1 && strcmp(e->fun.id, it->fun.id) == 0))){
+           (e->tip == 1 && (it->tip == 0 && strcmp(e->fun.id, it->var.id) == 0 || it->tip == 1 && strcmp(e->fun.id, it->fun.id) == 0)) && sameSign(e->fun.semnatura, it->fun.semnatura)){
             printf("%d: Redeclaration of variable\n", yylineno);
             exit(-1);
         }
@@ -103,6 +115,13 @@ void push(struct scope_entry *e, char* id, int dim){
     new_entry->next = NULL;
 }
 
+void push(struct sign* t, struct sign* s){
+    struct sign *it = t;
+    while(it->next != NULL)
+        it = it->next;
+    it->next = s;
+}
+
 void add(struct scope_entry *t, struct scope_entry *s){
     struct scope_entry *it = t;
     while(it->next != NULL)
@@ -111,9 +130,11 @@ void add(struct scope_entry *t, struct scope_entry *s){
     s->prev = it;
 }
 
-void display(struct scope *s){
+void display(struct scope *s, int tabs = 0){
     struct scope_entry *it = s->first_item;
     while(it != NULL){
+        for(int i = 0; i < TAB_SIZE * tabs; i++)
+            printf(" ");
         if(it->tip == 0){
             if(it->var.isConst)
                 printf("const ");
@@ -121,6 +142,9 @@ void display(struct scope *s){
         }
         if(it->tip == 1){
             printf("%s %s()\n", it->fun.tip, it->fun.id);
+        }
+        if(it->tip == 3){
+            display(it->scope, tabs+1);
         }
         it = it->next;
     }

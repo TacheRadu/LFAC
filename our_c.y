@@ -35,6 +35,7 @@ struct scope *globalScope;
      struct scope* scope_t;
      struct scope_entry* scope_entry_t;
      struct expr_type* expr_t;
+     struct sign* sign_t;
 }
 
 %type <string> ID TIP LOGICAL_OPERATOR STRING CLASS CONST OR AND IF ELSE WHILE
@@ -43,6 +44,7 @@ struct scope *globalScope;
 %type <nr_f> REAL_NR
 %type <expr_t> expresie
 %type <scope_t> progr declaratii bloc bloc_clasa
+%type <sign_t> lista_semnatura membru_semnatura
 %type <scope_entry_t> declaratie_var declaratie_func declaratie_clasa corp_declaratie atribuire_in_declaratie
 %%
 progr: declaratii {printf("%d : Done\n", yylineno); globalScope = $1;printf("program corect sintactic\n");}
@@ -62,12 +64,12 @@ declaratie_var: TIP corp_declaratie {printf("%d : Declaratie\n", yylineno); set_
           | CONST ID atribuire_in_declaratie
           ;
 
-declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$->tip = 1; $$->fun.tip = strdup($1); $$->fun.id = strdup($2);}
-               | TIP ID '(' ')' '{' bloc '}' {$$->tip = 1; $$->fun.tip = strdup($1); $$->fun.id = strdup($2);}
-               | TIP ID '(' ')' '{' '}' {$$->tip = 1; $$->fun.tip = strdup($1); $$->fun.id = strdup($2);}
-               | CONST TIP ID '(' lista_semnatura ')' '{' bloc '}'
-               | CONST TIP ID '(' ')' '{' bloc '}'
-               | CONST TIP ID '(' ')' '{' '}'
+declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2, $4, $7);}
+               | TIP ID '(' ')' '{' bloc '}' {$$ = entry($1, $2, $6);}
+               | TIP ID '(' ')' '{' '}' {$$ = entry($1, $2);}
+               | CONST TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($2, $3, $5, $8, 1);}
+               | CONST TIP ID '(' ')' '{' bloc '}' {$$ = entry($2, $3, $7, 1);}
+               | CONST TIP ID '(' ')' '{' '}' {$$ = entry($2, $3, 1);}
                | ID ID '(' lista_semnatura ')' '{' bloc '}'
                | ID ID '(' ')' '{' bloc '}'
                | ID ID '(' ')' '{' '}'
@@ -80,11 +82,11 @@ declaratie_clasa: CLASS ID '{' bloc_clasa '}'
                |  CLASS ID '{' '}'
                ;
 
-bloc:  declaratie_var ';'
+bloc:  declaratie_var ';' {$$ = scopeFromEntry($1);}
      | atribuire ';'
      | control
      | apel_functie ';'
-     | bloc declaratie_var ';'
+     | bloc declaratie_var ';' {push($1, $2); $$ = $1;}
      | bloc atribuire ';'
      | bloc control
      | bloc apel_functie ';'
@@ -119,12 +121,12 @@ bloc_clasa: declaratie_func
           | bloc_clasa declaratie_var ';'
           ;
 
-lista_semnatura: membru_semnatura
-               | lista_semnatura ',' membru_semnatura
+lista_semnatura: membru_semnatura {$$ = $1;}
+               | lista_semnatura ',' membru_semnatura {push($1, $3); $$ = $1;}
                ;
 
-membru_semnatura: TIP ID
-               |  CONST TIP ID
+membru_semnatura: TIP ID {$$ = signEntry($1, $2);}
+               |  CONST TIP ID {$$ = signEntry($2, $3, 1);}
                |  ID ID
                | CONST ID ID
                ;

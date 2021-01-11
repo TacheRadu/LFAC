@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "expr_type.h"
+#include "sign.h"
 
 struct scope_entry{
     struct scope_entry *prev, *next;
@@ -10,6 +11,7 @@ struct scope_entry{
     // type = 0: VAR
     // type = 1: FUN
     // type = 2: CLASS
+    // type = 3: SCOPE
     union{
         struct {
             char *tip;
@@ -36,8 +38,9 @@ struct scope_entry{
             char *tip;
             char *id;
             struct sign *semnatura;
-            struct scope *context;
+            bool isConst;
         }fun;
+        struct scope* scope;
     };
 };
 
@@ -60,6 +63,52 @@ struct scope_entry* entry(char* id, int dim){
     e->tip = 0;
     e->var.isArray = 1;
     e->var.dim = dim;
+    return e;
+}
+
+struct scope_entry* entry(char* tip, char* id, struct sign* semnatura, struct scope* bloc, bool isConst = 0){
+    struct scope_entry* e = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    struct scope_entry* e_bloc = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    e_bloc->next = NULL;
+    e_bloc->tip = 3;
+    e_bloc->scope = bloc;
+    e->prev = NULL;
+    e->tip = 1;
+    e->fun.tip = strdup(tip);
+    e->fun.id = strdup(id);
+    e->fun.semnatura = semnatura;
+    e->fun.isConst = isConst;
+    e->next = e_bloc;
+    e_bloc->prev = e;
+    return e;
+}
+
+struct scope_entry* entry(char* tip, char* id, struct scope* bloc, bool isConst = 0){
+    struct scope_entry* e = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    struct scope_entry* e_bloc = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    e_bloc->next = NULL;
+    e_bloc->tip = 3;
+    e_bloc->scope = bloc;
+    e->prev = NULL;
+    e->tip = 1;
+    e->fun.tip = strdup(tip);
+    e->fun.id = strdup(id);
+    e->fun.semnatura = NULL;
+    e->fun.isConst = isConst;
+    e->next = e_bloc;
+    e_bloc->prev = e;
+    return e;
+}
+
+struct scope_entry* entry(char* tip, char* id, bool isConst = 0){
+    struct scope_entry* e = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    e->prev = NULL;
+    e->next = NULL;
+    e->tip = 1;
+    e->fun.tip = strdup(tip);
+    e->fun.id = strdup(id);
+    e->fun.semnatura = NULL;
+    e->fun.isConst = isConst;
     return e;
 }
 

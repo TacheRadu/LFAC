@@ -80,7 +80,7 @@ struct scope_entry* entry(char* tip, char* id, struct sign* semnatura, struct sc
     e->fun.semnatura = semnatura;
     e->fun.isConst = isConst;
     e->fun.scope = bloc;
-    e->fun.scope->prev = e->prev;
+    e->fun.scope->first_item->prev = e->prev;
     struct sign *param = e->fun.semnatura;
     while(param != NULL){
         struct scope_entry *vars = e->fun.scope->first_item;
@@ -106,7 +106,7 @@ struct scope_entry* entry(char* tip, char* id, struct scope* bloc, bool isConst 
     e->fun.semnatura = NULL;
     e->fun.isConst = isConst;
     e->fun.scope = bloc;
-    e->fun.scope->prev = e->prev;
+    e->fun.scope->first_item->prev = e->prev;
     return e;
 }
 

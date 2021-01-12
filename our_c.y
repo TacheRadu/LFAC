@@ -60,8 +60,8 @@ declaratii: declaratie_var ';' { printf("%d : Declaratie variabila\n", yylineno)
 
 declaratie_var: TIP corp_declaratie {printf("%d : Declaratie\n", yylineno); set_tip($2, $1); $$ = $2;}
           | CONST TIP atribuire_in_declaratie {printf("%d : Declaratie const\n", yylineno); $3->var.isConst = 1; $3->var.tip = strdup($2); $$ = $3;}
-          | ID corp_declaratie  {printf("%d : Declaratie class obj\n", yylineno); printf("Data type not defined\n(Line %d)\n", yylineno); exit('0' - '1');} 
-          | CONST ID atribuire_in_declaratie
+          | ID corp_declaratie  {set_tip($2, $1); $$ = $2;} 
+          | CONST ID atribuire_in_declaratie {$3->var.isConst = 1; $3->var.tip = strdup($2); $$ = $3;}
           ;
 
 declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2, $4, $7);}
@@ -72,12 +72,14 @@ declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2,
                | CONST TIP ID '(' lista_semnatura ')' '{' '}' {$$ = entry($2, $3, $5, 1);}
                | CONST TIP ID '(' ')' '{' bloc '}' {$$ = entry($2, $3, $7, 1);}
                | CONST TIP ID '(' ')' '{' '}' {$$ = entry($2, $3, 1);}
-               | ID ID '(' lista_semnatura ')' '{' bloc '}'
-               | ID ID '(' ')' '{' bloc '}'
-               | ID ID '(' ')' '{' '}'
-               | CONST ID ID '(' lista_semnatura ')' '{' bloc '}'
-               | CONST ID ID '(' ')' '{' bloc '}'
-               | CONST ID ID '(' ')' '{' '}'
+               | ID ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2, $4, $7);}
+               | ID ID '(' lista_semnatura ')' '{' '}' {$$ = entry($1, $2, $4);}
+               | ID ID '(' ')' '{' bloc '}' {$$ = entry($1, $2, $6);}
+               | ID ID '(' ')' '{' '}' {$$ = entry($1, $2);}
+               | CONST ID ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($2, $3, $5, $8, 1);}
+               | CONST ID ID '(' lista_semnatura ')' '{' '}' {$$ = entry($2, $3, $5, 1);}
+               | CONST ID ID '(' ')' '{' bloc '}' {$$ = entry($2, $3, $7, 1);}
+               | CONST ID ID '(' ')' '{' '}' {$$ = entry($2, $3, 1);}
                ;
 
 declaratie_clasa: CLASS ID '{' bloc_clasa '}' {$$ = classEntry($2, $4);}

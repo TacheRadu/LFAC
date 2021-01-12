@@ -71,6 +71,20 @@ bool sameSign(struct sign *a, struct sign *b){
     return 1;
 }
 
+bool notStdType(struct scope_entry *e){
+    if(strcmp(e->var.tip, "int") == 0)
+        return 0;
+    if(strcmp(e->var.tip, "char") == 0)
+        return 0;
+    if(strcmp(e->var.tip, "string") == 0)
+        return 0;
+    if(strcmp(e->var.tip, "bool") == 0)
+        return 0;
+    if(strcmp(e->var.tip, "float") == 0)
+        return 0;
+    return 1;
+}
+
 void push(struct scope *s, struct scope_entry *e){
     struct scope_entry *it = s->first_item;
     if(it == NULL){

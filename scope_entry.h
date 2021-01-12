@@ -125,6 +125,18 @@ struct scope_entry* entry(char* tip, char* id, bool isConst = 0){
     return e;
 }
 
+struct scope_entry* entry(char* tip, char* id, struct sign *semnatura, bool isConst = 0){
+    struct scope_entry* e = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    e->prev = NULL;
+    e->next = NULL;
+    e->tip = 1;
+    e->fun.tip = strdup(tip);
+    e->fun.id = strdup(id);
+    e->fun.semnatura = semnatura;
+    e->fun.isConst = isConst;
+    return e;
+}
+
 struct scope_entry* assign(char* id, struct expr_type *exp){
     struct scope_entry* res = (struct scope_entry*) malloc(sizeof(struct scope_entry));
     res->tip = 0;

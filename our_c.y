@@ -65,9 +65,11 @@ declaratie_var: TIP corp_declaratie {printf("%d : Declaratie\n", yylineno); set_
           ;
 
 declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2, $4, $7);}
+               | TIP ID '(' lista_semnatura ')' '{' '}' {$$ = entry($1, $2, $4);}
                | TIP ID '(' ')' '{' bloc '}' {$$ = entry($1, $2, $6);}
                | TIP ID '(' ')' '{' '}' {$$ = entry($1, $2);}
                | CONST TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($2, $3, $5, $8, 1);}
+               | CONST TIP ID '(' lista_semnatura ')' '{' '}' {$$ = entry($2, $3, $5, 1);}
                | CONST TIP ID '(' ')' '{' bloc '}' {$$ = entry($2, $3, $7, 1);}
                | CONST TIP ID '(' ')' '{' '}' {$$ = entry($2, $3, 1);}
                | ID ID '(' lista_semnatura ')' '{' bloc '}'

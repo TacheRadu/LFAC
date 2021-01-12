@@ -1,4 +1,4 @@
-#include "scope.h"
+#include "scope_entry.h"
 
 #define TAB_SIZE 5
 

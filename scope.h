@@ -1,4 +1,3 @@
-#include "scope_entry.h"
 
 struct scope{
     struct scope_entry *prev;

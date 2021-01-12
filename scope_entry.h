@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "expr_type.h"
+#include "scope.h"
 #include "sign.h"
 
 struct scope_entry{
@@ -80,6 +81,18 @@ struct scope_entry* entry(char* tip, char* id, struct sign* semnatura, struct sc
     e->fun.isConst = isConst;
     e->next = e_bloc;
     e_bloc->prev = e;
+    struct sign *param = e->fun.semnatura;
+    while(param != NULL){
+        struct scope_entry *vars = e_bloc->scope->first_item;
+        while(vars != NULL){
+            if(vars->tip == 0 && strcmp(param->id, vars->var.id) == 0){
+                printf("%d: Variable declaration shadows a parameter\n", yylineno);
+                exit(-1);
+            }
+            vars = vars->next;
+        }
+        param = param->next;
+    }
     return e;
 }
 

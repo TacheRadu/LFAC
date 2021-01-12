@@ -87,8 +87,6 @@ void push(struct scope *s, struct scope_entry *e){
     }
     it->next = e;
     e->prev = it;
-    if(e->tip == 3)
-        e->scope->prev = it;
 }
 
 void push(struct scope_entry *e, char* id){
@@ -135,6 +133,8 @@ void add(struct scope_entry *t, struct scope_entry *s){
 }
 
 void display(struct scope *s, int tabs = 0){
+    if(s == NULL)
+        return;
     struct scope_entry *it = s->first_item;
     while(it != NULL){
         for(int i = 0; i < TAB_SIZE * tabs; i++)
@@ -145,10 +145,18 @@ void display(struct scope *s, int tabs = 0){
             printf("%s %s;\n", it->var.tip, it->var.id);
         }
         if(it->tip == 1){
-            printf("%s %s()\n", it->fun.tip, it->fun.id);
+            printf("%s %s(){\n", it->fun.tip, it->fun.id);
+            display(it->fun.scope, tabs + 1);
+            for(int i = 0; i < TAB_SIZE * tabs; i++)
+                printf(" ");
+            printf("}\n");
         }
-        if(it->tip == 3){
-            display(it->scope, tabs+1);
+        if(it->tip == 2){
+            printf("class %s{\n", it->cls.id);
+            display(it->cls.scope, tabs + 1);
+            for(int i = 0; i < TAB_SIZE * tabs; i++)
+                printf(" ");
+            printf("};\n");
         }
         it = it->next;
     }

@@ -80,8 +80,8 @@ declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2,
                | CONST ID ID '(' ')' '{' '}'
                ;
 
-declaratie_clasa: CLASS ID '{' bloc_clasa '}'
-               |  CLASS ID '{' '}'
+declaratie_clasa: CLASS ID '{' bloc_clasa '}' {$$ = classEntry($2, $4);}
+               |  CLASS ID '{' '}' {$$ = classEntry($2);}
                ;
 
 bloc:  declaratie_var ';' {$$ = scopeFromEntry($1);}
@@ -117,10 +117,10 @@ if: IF '(' expresie ')' '{' bloc '}'
 while: WHILE '(' expresie ')' '{' bloc '}'
      ;
 
-bloc_clasa: declaratie_func
-          | declaratie_var ';'
-          | bloc_clasa declaratie_func
-          | bloc_clasa declaratie_var ';'
+bloc_clasa: declaratie_func {$$ = scopeFromEntry($1);}
+          | declaratie_var ';' {$$ = scopeFromEntry($1);}
+          | bloc_clasa declaratie_func {push($1, $2); $$ = $1;}
+          | bloc_clasa declaratie_var ';' {push($1, $2), $$ = $1;}
           ;
 
 lista_semnatura: membru_semnatura {$$ = $1;}

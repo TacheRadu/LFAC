@@ -12,7 +12,6 @@ struct scope_entry{
     // type = 0: VAR
     // type = 1: FUN
     // type = 2: CLASS
-    // type = 3: SCOPE
     union{
         struct {
             char *tip;
@@ -40,8 +39,12 @@ struct scope_entry{
             char *id;
             struct sign *semnatura;
             bool isConst;
+            struct scope* scope;
         }fun;
-        struct scope* scope;
+        struct {
+            char *id;
+            struct scope* scope;
+        }cls;
     };
 };
 
@@ -69,21 +72,18 @@ struct scope_entry* entry(char* id, int dim){
 
 struct scope_entry* entry(char* tip, char* id, struct sign* semnatura, struct scope* bloc, bool isConst = 0){
     struct scope_entry* e = (struct scope_entry*) malloc(sizeof(struct scope_entry));
-    struct scope_entry* e_bloc = (struct scope_entry*) malloc(sizeof(struct scope_entry));
-    e_bloc->next = NULL;
-    e_bloc->tip = 3;
-    e_bloc->scope = bloc;
     e->prev = NULL;
+    e->next = NULL;
     e->tip = 1;
     e->fun.tip = strdup(tip);
     e->fun.id = strdup(id);
     e->fun.semnatura = semnatura;
     e->fun.isConst = isConst;
-    e->next = e_bloc;
-    e_bloc->prev = e;
+    e->fun.scope = bloc;
+    e->fun.scope->prev = e->prev;
     struct sign *param = e->fun.semnatura;
     while(param != NULL){
-        struct scope_entry *vars = e_bloc->scope->first_item;
+        struct scope_entry *vars = e->fun.scope->first_item;
         while(vars != NULL){
             if(vars->tip == 0 && strcmp(param->id, vars->var.id) == 0){
                 printf("%d: Variable declaration shadows a parameter\n", yylineno);
@@ -98,18 +98,15 @@ struct scope_entry* entry(char* tip, char* id, struct sign* semnatura, struct sc
 
 struct scope_entry* entry(char* tip, char* id, struct scope* bloc, bool isConst = 0){
     struct scope_entry* e = (struct scope_entry*) malloc(sizeof(struct scope_entry));
-    struct scope_entry* e_bloc = (struct scope_entry*) malloc(sizeof(struct scope_entry));
-    e_bloc->next = NULL;
-    e_bloc->tip = 3;
-    e_bloc->scope = bloc;
     e->prev = NULL;
+    e->next = NULL;
     e->tip = 1;
     e->fun.tip = strdup(tip);
     e->fun.id = strdup(id);
     e->fun.semnatura = NULL;
     e->fun.isConst = isConst;
-    e->next = e_bloc;
-    e_bloc->prev = e;
+    e->fun.scope = bloc;
+    e->fun.scope->prev = e->prev;
     return e;
 }
 
@@ -121,6 +118,7 @@ struct scope_entry* entry(char* tip, char* id, bool isConst = 0){
     e->fun.tip = strdup(tip);
     e->fun.id = strdup(id);
     e->fun.semnatura = NULL;
+    e->fun.scope = NULL;
     e->fun.isConst = isConst;
     return e;
 }
@@ -133,7 +131,24 @@ struct scope_entry* entry(char* tip, char* id, struct sign *semnatura, bool isCo
     e->fun.tip = strdup(tip);
     e->fun.id = strdup(id);
     e->fun.semnatura = semnatura;
+    e->fun.scope = NULL;
     e->fun.isConst = isConst;
+    return e;
+}
+
+struct scope_entry* classEntry(char* id){
+    struct scope_entry* e = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    e->tip = 2;
+    e->cls.id = strdup(id);
+    e->cls.scope = NULL;
+    return e;
+}
+
+struct scope_entry* classEntry(char* id, struct scope* scope){
+    struct scope_entry* e = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    e->tip = 2;
+    e->cls.id = strdup(id);
+    e->cls.scope = scope;
     return e;
 }
 

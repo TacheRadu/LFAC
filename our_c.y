@@ -131,8 +131,8 @@ lista_semnatura: membru_semnatura {$$ = $1;}
 
 membru_semnatura: TIP ID {$$ = signEntry($1, $2);}
                |  CONST TIP ID {$$ = signEntry($2, $3, 1);}
-               |  ID ID
-               | CONST ID ID
+               |  ID ID {$$ = signEntry($1, $2);}
+               | CONST ID ID {$$ = signEntry($2, $3, 1);}
                ;
 
 corp_declaratie: ID {printf("%d : Corp declaratie\n", yylineno); $$ = entry($1);}
@@ -148,7 +148,7 @@ expresie:  REAL_NR {$$ = create_expr($1);}
           | NATURAL_NR {$$ = create_expr($1);}
           | BOOL {$$ = create_expr($1, 0);}
           | CHAR {$$ = create_expr($1);}
-          | ID {}
+          | ID
           | expresie '+' expresie {$$ = expr_aritm($1, $3, $<character>2);}
           | expresie '-' expresie {$$ = expr_aritm($1, $3, $<character>2);}
           | expresie '*' expresie {$$ = expr_aritm($1, $3, $<character>2);}
@@ -180,6 +180,8 @@ int main(int argc, char** argv){
      yyin=fopen(argv[1],"r");
 
      yyparse();
+
+     check(globalScope);
 
      display(globalScope);
 } 

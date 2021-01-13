@@ -25,7 +25,8 @@ void set_tip(struct scope_entry* e, char* tip){
             else
                 it->var.classValArr = (int*) malloc(it->var.dim * sizeof(int));
         }
-        it->var.tip = strdup(tip);
+        if(it->tip == 0)
+            it->var.tip = strdup(tip);
         it = it->next;
     }
 }
@@ -73,9 +74,14 @@ void push(struct scope *s, struct scope_entry *e){
         s->first_item = e;
         return;
     }
+    if((e->tip == 0 && (it->tip == 0 && strcmp(e->var.id, it->var.id) == 0 || it->tip == 1 && strcmp(e->var.id, it->fun.id) == 0)) ||
+       (e->tip == 1 && (it->tip == 0 && strcmp(e->fun.id, it->var.id) == 0 || it->tip == 1 && strcmp(e->fun.id, it->fun.id) == 0 && sameSign(e->fun.semnatura, it->fun.semnatura)))){
+        printf("%d: Redeclaration of variable\n", yylineno);
+        exit(-1);
+    }
     while(it->next != NULL){
         if((e->tip == 0 && (it->tip == 0 && strcmp(e->var.id, it->var.id) == 0 || it->tip == 1 && strcmp(e->var.id, it->fun.id) == 0)) ||
-           (e->tip == 1 && (it->tip == 0 && strcmp(e->fun.id, it->var.id) == 0 || it->tip == 1 && strcmp(e->fun.id, it->fun.id) == 0)) && sameSign(e->fun.semnatura, it->fun.semnatura)){
+           (e->tip == 1 && (it->tip == 0 && strcmp(e->fun.id, it->var.id) == 0 || it->tip == 1 && strcmp(e->fun.id, it->fun.id) == 0 && sameSign(e->fun.semnatura, it->fun.semnatura)))){
             printf("%d: Redeclaration of variable\n", yylineno);
             exit(-1);
         }
@@ -83,6 +89,10 @@ void push(struct scope *s, struct scope_entry *e){
     }
     it->next = e;
     e->prev = it;
+    if(e->tip == 1 && e->fun.scope != NULL)
+        e->fun.scope->first_item->prev = it;
+    if(e->tip == 2 && e->cls.scope != NULL)
+        e->cls.scope->first_item->prev = it;
 }
 
 void push(struct scope_entry *e, char* id){
@@ -126,6 +136,10 @@ void add(struct scope_entry *t, struct scope_entry *s){
         it = it->next;
     it->next = s;
     s->prev = it;
+    if(s->tip == 1 && s->cls.scope != NULL)
+        s->fun.scope->first_item->prev = it;
+    if(s->tip == 2 && s->cls.scope != NULL)
+        s->cls.scope->first_item->prev = it;
 }
 
 void printSign(struct scope_entry *e){
@@ -167,7 +181,7 @@ void display(struct scope *s, int tabs = 0){
             printf("};\n");
         }
         if(it->tip == 3){
-            printf("%s %s = smth\n", it->assignment.var->var.tip, it->assignment.var->var.id);
+            printf("%s = smth\n", it->assignment.var->var.id);
         }
         it = it->next;
     }
@@ -206,8 +220,10 @@ void checkSign(struct scope_entry *e){
         bool f = 0;
         struct scope_entry *it = e->prev;
         while(it != NULL){
-            if(!notStdType(s->tip))
+            if(!notStdType(s->tip)){
                 f = 1;
+                break;
+            }
             if(it->tip == 2 && strcmp(it->cls.id, s->tip) == 0){
                 f = 1;
                 break;
@@ -222,22 +238,67 @@ void checkSign(struct scope_entry *e){
     }
 }
 
-void check(struct scope *s){
+void checkFunctionSignatures(struct scope *s){
     if(s == NULL)
         return;
     struct scope_entry *it = s->first_item;
     while(it != NULL){
-        // check type of variables and functions
-        if((it->tip == 0 && notStdType(it->var.tip) && !lookForClass(it)) ||
-           (it->tip == 1 && notStdType(it->fun.tip) && !lookForClass(it))){
+        if(it->tip == 1)
+            checkSign(it);
+        if(it->tip == 2)
+            checkFunctionSignatures(it->cls.scope);
+
+        it = it->next;
+    }
+}
+
+void checkDeclarations(struct scope *s){
+    if(s == NULL)
+        return;
+    struct scope_entry *it = s->first_item;
+    while(it != NULL){
+        // check type of variables
+        if(it->tip == 0 && notStdType(it->var.tip) && !lookForClass(it)){
             printf("%s: No such type\n", it->var.tip);
             exit(-1);
         }
 
-        //check type of function parameters;
-        if(it->tip == 1)
-            checkSign(it);
+        //check type of nested variables
+        if(it->tip == 1){
+            checkDeclarations(it->fun.scope);
+        }
 
+        it = it->next;
+    }
+}
+
+void checkVariable(struct scope_entry *e){
+    struct scope_entry *it = e->prev;
+    bool f = 0;
+    while(it != NULL){
+        if(it->tip == 0 && strcmp(e->assignment.id, it->var.id) == 0){
+            f = 1;
+            break;
+        }
+        it = it->prev;
+    }
+    if(!f){
+        printf("%s: undeclared variable\n", e->assignment.id);
+        exit(-1);
+    }
+}
+
+void checkAssignments(struct scope *s){
+    if(s == NULL)
+        return;
+    struct scope_entry *it = s->first_item;
+    while(it != NULL){
+        if(it->tip == 3)
+            checkVariable(it);
+        if(it->tip == 1)
+            checkAssignments(it->fun.scope);
+        if(it->tip == 2)
+            checkAssignments(it->cls.scope);
         it = it->next;
     }
 }

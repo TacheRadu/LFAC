@@ -52,12 +52,10 @@ struct scope_entry{
         }cls;
         struct {
             char* id;
-            bool isStringExp;
-            union{
-                struct expr_type *expression;
-                struct expr_string *string_exp;
-            };
+            struct expr_type *expression;
             struct scope_entry *var;
+            bool isArray;
+            int index;
         }assignment;
     };
 };
@@ -94,7 +92,6 @@ struct scope_entry* entry(char* tip, char* id, struct sign* semnatura, struct sc
     e->fun.semnatura = semnatura;
     e->fun.isConst = isConst;
     e->fun.scope = bloc;
-    e->fun.scope->first_item->prev = e->prev;
     struct sign *param = e->fun.semnatura;
     while(param != NULL){
         struct scope_entry *vars = e->fun.scope->first_item;
@@ -120,7 +117,6 @@ struct scope_entry* entry(char* tip, char* id, struct scope* bloc, bool isConst 
     e->fun.semnatura = NULL;
     e->fun.isConst = isConst;
     e->fun.scope = bloc;
-    e->fun.scope->first_item->prev = e->prev;
     return e;
 }
 
@@ -152,6 +148,8 @@ struct scope_entry* entry(char* tip, char* id, struct sign *semnatura, bool isCo
 
 struct scope_entry* classEntry(char* id){
     struct scope_entry* e = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    e->prev = NULL;
+    e->next = NULL;
     e->tip = 2;
     e->cls.id = strdup(id);
     e->cls.scope = NULL;
@@ -160,9 +158,12 @@ struct scope_entry* classEntry(char* id){
 
 struct scope_entry* classEntry(char* id, struct scope* scope){
     struct scope_entry* e = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    e->prev = NULL;
+    e->next = NULL;
     e->tip = 2;
     e->cls.id = strdup(id);
     e->cls.scope = scope;
+    printf("In functiune\n");
     return e;
 }
 
@@ -176,9 +177,34 @@ struct scope_entry* decl_assign_entry(char* id, struct expr_type *exp, bool isCo
     a->next = NULL;
     a->assignment.id = strdup(id);
     a->assignment.var = e;
-    a->assignment.isStringExp = false;
     a->assignment.expression = exp;
+    a->assignment.isArray = false;
     e->next = a;
     a->prev = e;
     return e;
+}
+
+struct scope_entry* assign_entry(char* id, struct expr_type *exp){
+    struct scope_entry *a = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    a->tip = 3;
+    a->prev = NULL;
+    a->next = NULL;
+    a->assignment.id = strdup(id);
+    a->assignment.isArray = false;
+    a->assignment.var = NULL;
+    a->assignment.expression = exp;
+    return a;
+}
+
+struct scope_entry* assign_entry(char* id, int index, struct expr_type *exp){
+    struct scope_entry *a = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    a->tip = 3;
+    a->prev = NULL;
+    a->next = NULL;
+    a->assignment.id = strdup(id);
+    a->assignment.var = NULL;
+    a->assignment.isArray = true;
+    a->assignment.index = index;
+    a->assignment.expression = exp;
+    return a;
 }

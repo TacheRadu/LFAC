@@ -47,7 +47,7 @@ struct scope *globalScope;
 %type <expr_t> expresie
 %type <scope_t> progr declaratii bloc bloc_clasa
 %type <sign_t> lista_semnatura membru_semnatura
-%type <scope_entry_t> declaratie_var declaratie_func declaratie_clasa corp_declaratie
+%type <scope_entry_t> declaratie_var declaratie_func declaratie_clasa corp_declaratie atribuire
 %%
 progr: declaratii {printf("%d : Done\n", yylineno); globalScope = $1;printf("program corect sintactic\n");}
      ;
@@ -66,7 +66,7 @@ declaratie_var: TIP corp_declaratie {printf("%d : Declaratie\n", yylineno); set_
           | CONST ID ID ASSIGN expresie {printf("%d : Atribuire expresie\n", yylineno); $$ = decl_assign_entry($3, $5, 1, $2);}
           ;
 
-declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2, $4, $7);}
+declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2, $4, $7); printf("Dupa ce a facut entry\n");}
                | TIP ID '(' lista_semnatura ')' '{' '}' {$$ = entry($1, $2, $4);}
                | TIP ID '(' ')' '{' bloc '}' {$$ = entry($1, $2, $6);}
                | TIP ID '(' ')' '{' '}' {$$ = entry($1, $2);}
@@ -84,16 +84,16 @@ declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2,
                | CONST ID ID '(' ')' '{' '}' {$$ = entry($2, $3, 1);}
                ;
 
-declaratie_clasa: CLASS ID '{' bloc_clasa '}' {$$ = classEntry($2, $4);}
+declaratie_clasa: CLASS ID '{' bloc_clasa '}' {$$ = classEntry($2, $4); printf("Am facut si classEntry\n");}
                |  CLASS ID '{' '}' {$$ = classEntry($2);}
                ;
 
 bloc:  declaratie_var ';' {$$ = scopeFromEntry($1);}
-     | atribuire ';'
+     | atribuire ';' {$$ = scopeFromEntry($1);}
      | control
      | apel_functie ';'
      | bloc declaratie_var ';' {push($1, $2); $$ = $1;}
-     | bloc atribuire ';'
+     | bloc atribuire ';' {push($1, $2); $$ = $1;}
      | bloc control
      | bloc apel_functie ';'
      ;
@@ -121,9 +121,9 @@ if: IF '(' expresie ')' '{' bloc '}'
 while: WHILE '(' expresie ')' '{' bloc '}'
      ;
 
-bloc_clasa: declaratie_func {$$ = scopeFromEntry($1);}
+bloc_clasa: declaratie_func {$$ = scopeFromEntry($1); printf("Facem si asta\n");}
           | declaratie_var ';' {$$ = scopeFromEntry($1);}
-          | bloc_clasa declaratie_func {push($1, $2); $$ = $1;}
+          | bloc_clasa declaratie_func {push($1, $2); $$ = $1; printf("Push-ul stie sa il faca\n");}
           | bloc_clasa declaratie_var ';' {push($1, $2), $$ = $1;}
           ;
 
@@ -165,8 +165,8 @@ expresie:  REAL_NR {$$ = create_expr($1);}
           | '!' expresie {$$ = expr_negation($2);}
           ;
 
-atribuire:  ID ASSIGN expresie {/*printf("%s = %f\n", $1, $3->val);*/}
-          | ID '[' NATURAL_NR ']' ASSIGN expresie {/*printf("%s[%i] = %f\n", $1, $3, $6->val);*/}
+atribuire:  ID ASSIGN expresie {printf("%d: I do assign\n", yylineno); $$ = assign_entry($1, $3);}
+          | ID '[' NATURAL_NR ']' ASSIGN expresie {$$ = assign_entry($1, $3, $6);}
           ;
 %%
 void yyerror(const char * s){
@@ -175,10 +175,13 @@ printf("eroare: %s la linia:%d\n",s,yylineno);
 
 int main(int argc, char** argv){
      yyin=fopen(argv[1],"r");
-
+     // redeclarations are checked here, since declarations are scope-dependent
      yyparse();
 
-     check(globalScope);
+     // check if declarations of a certain type are valid.
+     checkDeclarations(globalScope);
+     checkFunctionSignatures(globalScope);
+     checkAssignments(globalScope);
 
      display(globalScope);
 } 

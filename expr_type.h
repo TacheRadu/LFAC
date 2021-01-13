@@ -5,6 +5,7 @@ extern int yylineno;
 struct expr_type{
     char *tip;
     bool isVar;
+    bool isString;
     union{
         struct {
             bool isArr;
@@ -29,13 +30,17 @@ struct expr_type{
             // !: 12
         }exp;
     };
-    float val;
+    union{
+        float val;
+        char* sVal;
+    };
 };
 
 struct expr_type* create_expr(int n){
     struct expr_type *e = (struct expr_type*) malloc(sizeof(struct expr_type));
     e->tip = strdup("int");
     e->isVar = false;
+    e->isString = false;
     e->exp.left = NULL;
     e->val = (float)n;
     return e;
@@ -45,6 +50,7 @@ struct expr_type* create_expr(float n){
     struct expr_type *e = (struct expr_type*) malloc(sizeof(struct expr_type));
     e->tip = strdup("float");
     e->isVar = false;
+    e->isString = false;
     e->exp.left = NULL;
     e->val = (float)n;
     return e;
@@ -54,6 +60,7 @@ struct expr_type* create_expr(bool n){
     struct expr_type *e = (struct expr_type*) malloc(sizeof(struct expr_type));
     e->tip = strdup("bool");
     e->isVar = false;
+    e->isString = false;
     e->exp.left = NULL;
     e->val = (float)n;
     return e;
@@ -63,16 +70,24 @@ struct expr_type* create_expr(char n){
     struct expr_type *e = (struct expr_type*) malloc(sizeof(struct expr_type));
     e->tip = strdup("char");
     e->isVar = false;
+    e->isString = false;
     e->exp.left = NULL;
     e->val = (float)n;
     return e;
 }
 
-struct expr_type* create_expr(char* id){
+struct expr_type* create_expr(char* id, bool isString = 0){
     struct expr_type *e = (struct expr_type*) malloc(sizeof(struct expr_type));
-    e->isVar = true;
-    e->var.id = strdup(id);
-    e->var.isArr = false;
+    e->isString = isString;
+    if(isString){
+        e->isVar = false;
+        e->sVal = strdup(id);
+    }
+    else{
+        e->isVar = true;
+        e->var.id = strdup(id);
+        e->var.isArr = false;
+    }
     return e;
 }
 

@@ -37,7 +37,6 @@ struct scope *globalScope;
      struct scope_entry* scope_entry_t;
      struct expr_type* expr_t;
      struct sign* sign_t;
-     struct expr_string* expr_string_t;
 }
 
 %type <string> ID TIP LOGICAL_OPERATOR STRING CLASS CONST OR AND IF ELSE WHILE
@@ -46,10 +45,9 @@ struct scope *globalScope;
 %type <bool_t> BOOL
 %type <nr_f> REAL_NR
 %type <expr_t> expresie
-%type <expr_string_t> expresie_string
 %type <scope_t> progr declaratii bloc bloc_clasa
 %type <sign_t> lista_semnatura membru_semnatura
-%type <scope_entry_t> declaratie_var declaratie_func declaratie_clasa corp_declaratie atribuire_in_declaratie
+%type <scope_entry_t> declaratie_var declaratie_func declaratie_clasa corp_declaratie
 %%
 progr: declaratii {printf("%d : Done\n", yylineno); globalScope = $1;printf("program corect sintactic\n");}
      ;
@@ -63,9 +61,9 @@ declaratii: declaratie_var ';' { printf("%d : Declaratie variabila\n", yylineno)
 	     ;
 
 declaratie_var: TIP corp_declaratie {printf("%d : Declaratie\n", yylineno); set_tip($2, $1); $$ = $2;}
-          | CONST TIP atribuire_in_declaratie {printf("%d : Declaratie const\n", yylineno); $3->var.isConst = 1; $3->var.tip = strdup($2); $$ = $3;}
+          | CONST TIP ID ASSIGN expresie {printf("%d : Atribuire expresie\n", yylineno); $$ = decl_assign_entry($3, $5, 1, $2);}
           | ID corp_declaratie  {set_tip($2, $1); $$ = $2;} 
-          | CONST ID atribuire_in_declaratie {$3->var.isConst = 1; $3->var.tip = strdup($2); $$ = $3;}
+          | CONST ID ID ASSIGN expresie {printf("%d : Atribuire expresie\n", yylineno); $$ = decl_assign_entry($3, $5, 1, $2);}
           ;
 
 declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2, $4, $7);}
@@ -141,10 +139,10 @@ membru_semnatura: TIP ID {$$ = signEntry($1, $2);}
 
 corp_declaratie: ID {printf("%d : Corp declaratie\n", yylineno); $$ = entry($1);}
                | ID '[' NATURAL_NR ']' {printf("%d : Corp declaratie arr\n", yylineno); $$ = entry($1, $3);}
-               | atribuire_in_declaratie {printf("%d : Corp declaratie atrib\n", yylineno); $$ = $1;}
+               | ID ASSIGN expresie {printf("%d : Atribuire expresie\n", yylineno); $$ = decl_assign_entry($1, $3);}
                | corp_declaratie ',' ID {printf("%d : Corp declaratie multipla\n", yylineno); push($1, $3); $$ = $1;}
                | corp_declaratie ',' ID '[' NATURAL_NR ']' {push($1, $3, $5); $$ = $1;}
-               | corp_declaratie ',' atribuire_in_declaratie {add($1, $3); $$ = $1;}
+               | corp_declaratie ',' ID ASSIGN expresie {add($1, decl_assign_entry($3, $5)); $$ = $1;}
                ;
 
 expresie:  REAL_NR {$$ = create_expr($1);}
@@ -152,6 +150,7 @@ expresie:  REAL_NR {$$ = create_expr($1);}
           | NATURAL_NR {$$ = create_expr($1);}
           | BOOL {$$ = create_expr($1);}
           | CHAR {$$ = create_expr($1);}
+          | STRING {$$ = create_expr($1, 1);}
           | ID {$$ = create_expr($1);}
           | ID '[' NATURAL_NR ']' {$$ = create_expr($1, $3);}
           | expresie '+' expresie {$$ = expr($1, $3, 1);}
@@ -166,22 +165,8 @@ expresie:  REAL_NR {$$ = create_expr($1);}
           | '!' expresie {$$ = expr_negation($2);}
           ;
 
-expresie_string: STRING
-               | ID
-               | ID '[' NATURAL_NR ']'
-               | expresie_string "==" STRING
-               | expresie_string "==" ID
-               | expresie_string "==" ID '[' NATURAL_NR ']'
-               ;
-
-atribuire_in_declaratie:   ID ASSIGN expresie {printf("%d : Atribuire expresie\n", yylineno); $$ = decl_assign_entry($1, $3);}
-                         | ID ASSIGN expresie_string {printf("%d : Atribuire string\n", yylineno); $$ = decl_assign_entry($1, $3);}
-                         ;
-
 atribuire:  ID ASSIGN expresie {/*printf("%s = %f\n", $1, $3->val);*/}
-          | ID ASSIGN expresie_string {/*printf("%s = %s\n", $1, $3);*/}
           | ID '[' NATURAL_NR ']' ASSIGN expresie {/*printf("%s[%i] = %f\n", $1, $3, $6->val);*/}
-          | ID '[' NATURAL_NR ']' ASSIGN expresie_string {/*printf("%s[%i] = %s\n", $1, $3, $6);*/}
           ;
 %%
 void yyerror(const char * s){

@@ -166,8 +166,11 @@ struct scope_entry* classEntry(char* id, struct scope* scope){
     return e;
 }
 
-struct scope_entry* decl_assign_entry(char* id, struct expr_type *exp){
+struct scope_entry* decl_assign_entry(char* id, struct expr_type *exp, bool isConst = 0, char* tip = NULL){
     struct scope_entry *e = entry(id);
+    e->var.isConst = isConst;
+    if(tip != NULL)
+        e->var.tip = strdup(tip);
     struct scope_entry *a = (struct scope_entry*) malloc(sizeof(struct scope_entry));
     a->tip = 3;
     a->next = NULL;
@@ -175,20 +178,6 @@ struct scope_entry* decl_assign_entry(char* id, struct expr_type *exp){
     a->assignment.var = e;
     a->assignment.isStringExp = false;
     a->assignment.expression = exp;
-    e->next = a;
-    a->prev = e;
-    return e;
-}
-
-struct scope_entry* decl_assign_entry(char* id, struct expr_string *exp){
-    struct scope_entry *e = entry(id);
-    struct scope_entry *a = (struct scope_entry*) malloc(sizeof(struct scope_entry));
-    a->tip = 3;
-    a->next = NULL;
-    a->assignment.id = strdup(id);
-    a->assignment.var = e;
-    a->assignment.isStringExp = true;
-    a->assignment.string_exp = exp;
     e->next = a;
     a->prev = e;
     return e;

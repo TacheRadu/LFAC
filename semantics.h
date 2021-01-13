@@ -1,5 +1,4 @@
 #include "scope_entry.h"
-#include "expr_string.h"
 
 #define TAB_SIZE 5
 

@@ -89,10 +89,6 @@ void push(struct scope *s, struct scope_entry *e){
     }
     it->next = e;
     e->prev = it;
-    if(e->tip == 1 && e->fun.scope != NULL)
-        e->fun.scope->first_item->prev = it;
-    if(e->tip == 2 && e->cls.scope != NULL)
-        e->cls.scope->first_item->prev = it;
 }
 
 void push(struct scope_entry *e, char* id){
@@ -136,10 +132,6 @@ void add(struct scope_entry *t, struct scope_entry *s){
         it = it->next;
     it->next = s;
     s->prev = it;
-    if(s->tip == 1 && s->cls.scope != NULL)
-        s->fun.scope->first_item->prev = it;
-    if(s->tip == 2 && s->cls.scope != NULL)
-        s->cls.scope->first_item->prev = it;
 }
 
 void printSign(struct scope_entry *e){
@@ -182,6 +174,29 @@ void display(struct scope *s, int tabs = 0){
         }
         if(it->tip == 3){
             printf("%s = smth\n", it->assignment.var->var.id);
+        }
+        if(it->tip == 4){
+            printf("if(){\n");
+            display(it->if_s.scope, tabs + 1);
+            for(int i = 0; i < TAB_SIZE * tabs; i++)
+                printf(" ");
+            printf("}\n");
+            if(it->if_s.else_scope != NULL){
+                for(int i = 0; i < TAB_SIZE * tabs; i++)
+                    printf(" ");
+                printf("else{\n");
+                display(it->if_s.else_scope, tabs + 1);
+                for(int i = 0; i < TAB_SIZE * tabs; i++)
+                    printf(" ");
+                printf("}\n");
+            }
+        }
+        if(it->tip == 5){
+            printf("while(){\n");
+            display(it->while_s.scope, tabs + 1);
+            for(int i = 0; i < TAB_SIZE * tabs; i++)
+                printf(" ");
+            printf("}\n");
         }
         it = it->next;
     }
@@ -299,6 +314,75 @@ void checkAssignments(struct scope *s){
             checkAssignments(it->fun.scope);
         if(it->tip == 2)
             checkAssignments(it->cls.scope);
+        if(it->tip == 4){
+            checkAssignments(it->if_s.scope);
+            checkAssignments(it->if_s.else_scope);
+        }
+        if(it->tip == 5)
+            checkAssignments(it->while_s.scope);
+
         it = it->next;
     }
+}
+
+void setAssignment(struct scope_entry *a){
+    struct scope_entry *it = a->prev;
+    while(it != NULL){
+        if(it->tip == 0 && strcmp(it->var.id, a->assignment.id) == 0){
+            a->assignment.var = it;
+            return;
+        }
+        it = it->prev;
+    }
+}
+
+void setAssignments(struct scope *s){
+    if(s == NULL)
+        return;
+    struct scope_entry *it = s->first_item;
+    while(it != NULL){
+        if(it->tip == 3)
+            setAssignment(it);
+        if(it->tip == 1)
+            setAssignments(it->fun.scope);
+        if(it->tip == 2)
+            setAssignments(it->cls.scope);
+        if(it->tip == 4){
+            setAssignments(it->if_s.scope);
+            setAssignments(it->if_s.else_scope);
+        }
+        if(it->tip == 5)
+            setAssignments(it->while_s.scope);
+        it = it->next;
+    }
+}
+
+void linkBlocPrevs(struct scope* s){
+    if(s == NULL)
+        return;
+    struct scope_entry *it = s->first_item;
+    while(it != NULL){
+        if(it->tip == 1 && it->fun.scope != NULL){
+            it->fun.scope->first_item->prev = it->prev;
+            linkBlocPrevs(it->fun.scope);
+        }
+        if(it->tip == 2 && it->cls.scope != NULL){
+            it->cls.scope->first_item->prev = it->prev;
+            linkBlocPrevs(it->cls.scope);
+        }
+        if(it->tip == 4 && it->if_s.scope != NULL){
+            it->if_s.scope->first_item->prev = it->prev;
+            linkBlocPrevs(it->if_s.scope);
+            if(it->if_s.else_scope != NULL){
+                it->if_s.else_scope->first_item->prev = it->prev;
+                linkBlocPrevs(it->if_s.else_scope);
+            }
+        }
+        if(it->tip == 5 && it->while_s.scope != NULL){
+            it->while_s.scope->first_item->prev = it->prev;
+            linkBlocPrevs(it->while_s.scope);
+        }
+        it = it->next;
+    }
+
 }

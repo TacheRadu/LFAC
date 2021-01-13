@@ -47,7 +47,7 @@ struct scope *globalScope;
 %type <expr_t> expresie
 %type <scope_t> progr declaratii bloc bloc_clasa
 %type <sign_t> lista_semnatura membru_semnatura
-%type <scope_entry_t> declaratie_var declaratie_func declaratie_clasa corp_declaratie atribuire
+%type <scope_entry_t> declaratie_var declaratie_func declaratie_clasa corp_declaratie atribuire control if while
 %%
 progr: declaratii {printf("%d : Done\n", yylineno); globalScope = $1;printf("program corect sintactic\n");}
      ;
@@ -90,11 +90,11 @@ declaratie_clasa: CLASS ID '{' bloc_clasa '}' {$$ = classEntry($2, $4); printf("
 
 bloc:  declaratie_var ';' {$$ = scopeFromEntry($1);}
      | atribuire ';' {$$ = scopeFromEntry($1);}
-     | control
+     | control {$$ = scopeFromEntry($1);}
      | apel_functie ';'
      | bloc declaratie_var ';' {push($1, $2); $$ = $1;}
      | bloc atribuire ';' {push($1, $2); $$ = $1;}
-     | bloc control
+     | bloc control {push($1, $2); $$ = $1;}
      | bloc apel_functie ';'
      ;
 
@@ -110,15 +110,15 @@ lista_parametri: expresie
                | lista_parametri ',' apel_functie
                ;
 
-control: if
-     | while
+control: if {$$ = $1;}
+     | while {$$ = $1;}
      ;
 
-if: IF '(' expresie ')' '{' bloc '}'
-     | IF '(' expresie ')' '{' bloc '}' ELSE '{' bloc '}'
+if: IF '(' expresie ')' '{' bloc '}' {$$ = ifEntry($3, $6);}
+     | IF '(' expresie ')' '{' bloc '}' ELSE '{' bloc '}' {$$ = ifEntry($3, $6, $10);}
      ;
 
-while: WHILE '(' expresie ')' '{' bloc '}'
+while: WHILE '(' expresie ')' '{' bloc '}' {$$ = whileEntry($3, $6);}
      ;
 
 bloc_clasa: declaratie_func {$$ = scopeFromEntry($1); printf("Facem si asta\n");}
@@ -179,9 +179,11 @@ int main(int argc, char** argv){
      yyparse();
 
      // check if declarations of a certain type are valid.
+     linkBlocPrevs(globalScope);
      checkDeclarations(globalScope);
      checkFunctionSignatures(globalScope);
      checkAssignments(globalScope);
+     setAssignments(globalScope);
 
      display(globalScope);
 } 

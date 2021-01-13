@@ -13,6 +13,9 @@ struct scope_entry{
     // type = 1: FUN
     // type = 2: CLASS
     // type = 3: ASSIGNMENT
+    // type = 4: IF
+    // type = 5: WHILE
+    // type = 6: F_CALL
     union{
         struct {
             char *tip;
@@ -57,6 +60,16 @@ struct scope_entry{
             bool isArray;
             int index;
         }assignment;
+        struct {
+            struct expr_type *expression;
+            struct scope *scope, *else_scope;
+            struct scope_entry *pass, *fail;
+        }if_s;
+        struct {
+            struct expr_type *expression;
+            struct scope *scope;
+            struct scope_entry *pass, *fail;
+        }while_s;
     };
 };
 
@@ -207,4 +220,29 @@ struct scope_entry* assign_entry(char* id, int index, struct expr_type *exp){
     a->assignment.index = index;
     a->assignment.expression = exp;
     return a;
+}
+
+struct scope_entry* ifEntry(struct expr_type *exp, struct scope *bloc, struct scope *else_bloc = NULL){
+    struct scope_entry *i = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    i->tip = 4;
+    i->prev = NULL;
+    i->next = NULL;
+    i->if_s.expression = exp;
+    i->if_s.scope = bloc;
+    i->if_s.else_scope = else_bloc;
+    i->if_s.fail = NULL;
+    i->if_s.pass = NULL;
+    return i;
+}
+
+struct scope_entry* whileEntry(struct expr_type *exp, struct scope *bloc){
+    struct scope_entry *w = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    w->tip = 5;
+    w->prev = NULL;
+    w->next = NULL;
+    w->while_s.expression = exp;
+    w->while_s.scope = bloc;
+    w->while_s.fail = NULL;
+    w->while_s.pass = NULL;
+    return w;
 }

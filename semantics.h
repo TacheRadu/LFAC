@@ -1,15 +1,12 @@
 #include "scope_entry.h"
+#include "expr_string.h"
 
 #define TAB_SIZE 5
 
 void set_tip(struct scope_entry* e, char* tip){
     struct scope_entry* it = e;
     while(it != NULL){
-        if(it->tip != 0){
-            printf("%d: Habar n-am cum am ajuns aici\n", yylineno);
-            exit(-1);
-        }
-        if(it->var.tip != NULL){
+        if(it->tip == 0 && it->var.tip != NULL){
             if(strcmp(it->var.tip, tip) != 0){
                 printf("%d: Invalid assignment value\n", yylineno);
                 exit(-1);
@@ -23,7 +20,7 @@ void set_tip(struct scope_entry* e, char* tip){
             else if(strcmp(tip, "string") == 0)
                 it->var.sValArr = (char**) malloc(it->var.dim * sizeof(char*));
             else if(strcmp(tip, "bool") == 0)
-                it->var.bValArr = (int*) malloc(it->var.dim * sizeof(int));
+                it->var.bValArr = (bool*) malloc(it->var.dim * sizeof(bool));
             else if(strcmp(tip, "float") == 0)
                 it->var.fValArr = (float*) malloc(it->var.dim * sizeof(float));
             else
@@ -36,26 +33,26 @@ void set_tip(struct scope_entry* e, char* tip){
 
 void setValue(struct scope_entry *e, int n){
     if(strcmp(e->var.tip, "int") == 0){
-        e->var.iValArr = (int*) malloc(n);
+        e->var.iValArr = (int*) malloc(n * sizeof(int));
         return;
     }
     if(strcmp(e->var.tip, "char") == 0){
-        e->var.cValArr = (char*) malloc(n);
+        e->var.cValArr = (char*) malloc(n * sizeof(char));
         return;
     }
     if(strcmp(e->var.tip, "string") == 0){
-        e->var.sValArr = (char**) malloc(n);
+        e->var.sValArr = (char**) malloc(n * sizeof(char*));
         return;
     }
     if(strcmp(e->var.tip, "bool") == 0){
-        e->var.bValArr = (int*) malloc(n);
+        e->var.bValArr = (bool*) malloc(n * sizeof(bool));
         return;
     }
     if(strcmp(e->var.tip, "float") == 0){
-        e->var.fValArr = (float*) malloc(n);
+        e->var.fValArr = (float*) malloc(n * sizeof(float));
         return;
     }
-    e->var.classValArr = (int*) malloc(n);
+    e->var.classValArr = (int*) malloc(n * sizeof(int));
 }
 
 bool sameSign(struct sign *a, struct sign *b){
@@ -169,6 +166,9 @@ void display(struct scope *s, int tabs = 0){
             for(int i = 0; i < TAB_SIZE * tabs; i++)
                 printf(" ");
             printf("};\n");
+        }
+        if(it->tip == 3){
+            printf("%s %s = smth\n", it->assignment.var->var.tip, it->assignment.var->var.id);
         }
         it = it->next;
     }

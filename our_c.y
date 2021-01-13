@@ -29,6 +29,7 @@ struct scope *globalScope;
 
 %union{
      int nr_i;
+     bool bool_t;
      char* string;
      char character;
      float nr_f;
@@ -36,13 +37,16 @@ struct scope *globalScope;
      struct scope_entry* scope_entry_t;
      struct expr_type* expr_t;
      struct sign* sign_t;
+     struct expr_string* expr_string_t;
 }
 
 %type <string> ID TIP LOGICAL_OPERATOR STRING CLASS CONST OR AND IF ELSE WHILE
 %type <character> ASSIGN CHAR
-%type <nr_i> INTEGER_NR NATURAL_NR BOOL
+%type <nr_i> INTEGER_NR NATURAL_NR
+%type <bool_t> BOOL
 %type <nr_f> REAL_NR
 %type <expr_t> expresie
+%type <expr_string_t> expresie_string
 %type <scope_t> progr declaratii bloc bloc_clasa
 %type <sign_t> lista_semnatura membru_semnatura
 %type <scope_entry_t> declaratie_var declaratie_func declaratie_clasa corp_declaratie atribuire_in_declaratie
@@ -146,30 +150,38 @@ corp_declaratie: ID {printf("%d : Corp declaratie\n", yylineno); $$ = entry($1);
 expresie:  REAL_NR {$$ = create_expr($1);}
           | INTEGER_NR {$$ = create_expr($1);}
           | NATURAL_NR {$$ = create_expr($1);}
-          | BOOL {$$ = create_expr($1, 0);}
+          | BOOL {$$ = create_expr($1);}
           | CHAR {$$ = create_expr($1);}
-          | ID
-          | expresie '+' expresie {$$ = expr_aritm($1, $3, $<character>2);}
-          | expresie '-' expresie {$$ = expr_aritm($1, $3, $<character>2);}
-          | expresie '*' expresie {$$ = expr_aritm($1, $3, $<character>2);}
-          | expresie '/' expresie {$$ = expr_aritm($1, $3, $<character>2);}
-          | '-' expresie {$2->val = -$2->val; $$ = $2;}
-          | expresie AND expresie {$1->tip = 2; $1->val = $1->val && $3->val; $$ = $1;}
-          | expresie OR expresie {$1->tip = 2; $1->val = $1->val || $3->val; $$ = $1;}
-          | expresie LOGICAL_OPERATOR expresie {$$ = logical_operations($1, $3, $2);}
+          | ID {$$ = create_expr($1);}
+          | ID '[' NATURAL_NR ']' {$$ = create_expr($1, $3);}
+          | expresie '+' expresie {$$ = expr($1, $3, 1);}
+          | expresie '-' expresie {$$ = expr($1, $3, 2);}
+          | expresie '*' expresie {$$ = expr($1, $3, 3);}
+          | expresie '/' expresie {$$ = expr($1, $3, 4);}
+          | '-' expresie {$$ = expr_negate($2);}
+          | expresie AND expresie {$$ = expr($1, $3, 5);}
+          | expresie OR expresie {$$ = expr($1, $3, 6);}
+          | expresie LOGICAL_OPERATOR expresie {$$ = expr($1, $3, $2);}
           | '(' expresie ')' {$$ = $2;}
-          | '!' expresie {$2->tip = 2; $2->val = !$2->val; $$ = $2;}
+          | '!' expresie {$$ = expr_negation($2);}
           ;
 
+expresie_string: STRING
+               | ID
+               | ID '[' NATURAL_NR ']'
+               | expresie_string "==" STRING
+               | expresie_string "==" ID
+               | expresie_string "==" ID '[' NATURAL_NR ']'
+               ;
 
-atribuire_in_declaratie:   ID ASSIGN expresie {printf("%d : Atribuire expresie\n", yylineno); $$ = assign($1, $3);}
-                         | ID ASSIGN STRING {printf("%d : Atribuire string\n", yylineno); $$ = assign($1, $3);}
+atribuire_in_declaratie:   ID ASSIGN expresie {printf("%d : Atribuire expresie\n", yylineno); $$ = decl_assign_entry($1, $3);}
+                         | ID ASSIGN expresie_string {printf("%d : Atribuire string\n", yylineno); $$ = decl_assign_entry($1, $3);}
                          ;
 
 atribuire:  ID ASSIGN expresie {/*printf("%s = %f\n", $1, $3->val);*/}
-          | ID ASSIGN STRING {/*printf("%s = %s\n", $1, $3);*/}
+          | ID ASSIGN expresie_string {/*printf("%s = %s\n", $1, $3);*/}
           | ID '[' NATURAL_NR ']' ASSIGN expresie {/*printf("%s[%i] = %f\n", $1, $3, $6->val);*/}
-          | ID '[' NATURAL_NR ']' ASSIGN STRING {/*printf("%s[%i] = %s\n", $1, $3, $6);*/}
+          | ID '[' NATURAL_NR ']' ASSIGN expresie_string {/*printf("%s[%i] = %s\n", $1, $3, $6);*/}
           ;
 %%
 void yyerror(const char * s){

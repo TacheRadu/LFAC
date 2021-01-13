@@ -12,13 +12,18 @@ struct scope_entry{
     // type = 0: VAR
     // type = 1: FUN
     // type = 2: CLASS
+    // type = 3: ASSIGNMENT
     union{
         struct {
             char *tip;
             char *id;
-            int isArray;
-            int isConst;
+            bool isArray;
+            bool isConst;
             int dim;
+            union{
+                bool isSet;
+                bool *isSetElem;
+            };
             union{
                 int iVal;
                 int *iValArr;
@@ -26,8 +31,8 @@ struct scope_entry{
                 char *cValArr;
                 char *sVal;
                 char **sValArr;
-                int bVal;
-                int *bValArr;
+                bool bVal;
+                bool *bValArr;
                 float fVal;
                 float *fValArr;
                 int classVal;
@@ -45,6 +50,15 @@ struct scope_entry{
             char *id;
             struct scope* scope;
         }cls;
+        struct {
+            char* id;
+            bool isStringExp;
+            union{
+                struct expr_type *expression;
+                struct expr_string *string_exp;
+            };
+            struct scope_entry *var;
+        }assignment;
     };
 };
 
@@ -152,39 +166,30 @@ struct scope_entry* classEntry(char* id, struct scope* scope){
     return e;
 }
 
-struct scope_entry* assign(char* id, struct expr_type *exp){
-    struct scope_entry* res = (struct scope_entry*) malloc(sizeof(struct scope_entry));
-    res->tip = 0;
-    res->var.id = strdup(id);
-    res->var.isArray = 0;
-    res->next = NULL;
-    res->prev = NULL;
-    switch(exp->tip){
-        case 0:
-            res->var.tip = strdup("int");
-            res->var.iVal = (int) exp->val;
-            break;
-        case 1:
-            res->var.tip = strdup("char");
-            res->var.cVal = (char) exp->val;
-            break;
-        case 2:
-            res->var.tip = strdup("bool");
-            res->var.bVal = (int) exp->val;
-            break;
-        case 3:
-            res->var.tip = strdup("float");
-            res->var.fVal = exp->val;
-    }
-    return res;
+struct scope_entry* decl_assign_entry(char* id, struct expr_type *exp){
+    struct scope_entry *e = entry(id);
+    struct scope_entry *a = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    a->tip = 3;
+    a->next = NULL;
+    a->assignment.id = strdup(id);
+    a->assignment.var = e;
+    a->assignment.isStringExp = false;
+    a->assignment.expression = exp;
+    e->next = a;
+    a->prev = e;
+    return e;
 }
 
-struct scope_entry* assign(char* id, char* str){
-    struct scope_entry* res = (struct scope_entry*) malloc(sizeof(struct scope_entry));
-    res->tip = 0;
-    res->var.sVal = strdup(str);
-    res->var.id = strdup(id);
-    res->next = NULL;
-    res->prev = NULL;
-    return res;
+struct scope_entry* decl_assign_entry(char* id, struct expr_string *exp){
+    struct scope_entry *e = entry(id);
+    struct scope_entry *a = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    a->tip = 3;
+    a->next = NULL;
+    a->assignment.id = strdup(id);
+    a->assignment.var = e;
+    a->assignment.isStringExp = true;
+    a->assignment.string_exp = exp;
+    e->next = a;
+    a->prev = e;
+    return e;
 }

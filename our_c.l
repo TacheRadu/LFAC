@@ -8,7 +8,7 @@
 "int"|"char"|"string"|"bool"|"float" {yylval.string = strdup(yytext); return TIP;}
 "class" {yylval.string = strdup(yytext); return CLASS;}
 "const" {yylval.string = strdup(yytext); return CONST;}
-"true"|"false" {if(strcmp(yytext, "true") == 0) yylval.nr_i = 1; else yylval.nr_i = 0; return BOOL;}
+"true"|"false" {if(strcmp(yytext, "true") == 0) yylval.bool_t = true; else yylval.bool_t = false; return BOOL;}
 "if" {yylval.string = strdup(yytext); return IF;}
 "else" {yylval.string = strdup(yytext); return ELSE;}
 "while" {yylval.string = strdup(yytext); return WHILE;};

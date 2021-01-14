@@ -173,7 +173,10 @@ void display(struct scope *s, int tabs = 0){
             printf("};\n");
         }
         if(it->tip == 3){
-            printf("%s = smth\n", it->assignment.var->var.id);
+            printf("%s", it->assignment.var->var.id);
+            if(it->assignment.isArray)
+                printf("[%d]", it->assignment.index);
+            printf(" = smth\n");
         }
         if(it->tip == 4){
             printf("if(){\n");
@@ -253,13 +256,26 @@ void checkSign(struct scope_entry *e){
     }
 }
 
+void checkFunctionDefinition(struct scope_entry *e){
+    struct scope_entry *it = e->prev;
+    while(it != NULL){
+        if(it->tip == 1 && strcmp(e->fun.id, it->fun.id) == 0 && sameSign(it->fun.semnatura, e->fun.semnatura)){
+            printf("%s: Cannot redefine function with the same signature\n", e->fun.id);
+            exit(-1);
+        }
+        it = it->prev;
+    }
+}
+
 void checkFunctionSignatures(struct scope *s){
     if(s == NULL)
         return;
     struct scope_entry *it = s->first_item;
     while(it != NULL){
-        if(it->tip == 1)
+        if(it->tip == 1){
             checkSign(it);
+            checkFunctionDefinition(it);
+        }
         if(it->tip == 2)
             checkFunctionSignatures(it->cls.scope);
 
@@ -292,6 +308,14 @@ void checkVariable(struct scope_entry *e){
     bool f = 0;
     while(it != NULL){
         if(it->tip == 0 && strcmp(e->assignment.id, it->var.id) == 0){
+            if(it->var.isArray && !e->assignment.isArray){
+                printf("%s: not an array!\n", it->var.id);
+                exit(-1);
+            }
+            if(e->assignment.isArray && !it->var.isArray){
+                printf("%s: cannot access element of non-array type\n", it->var.id);
+                exit(-1);
+            }
             f = 1;
             break;
         }

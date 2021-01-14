@@ -178,11 +178,16 @@ int main(int argc, char** argv){
      // redeclarations are checked here, since declarations are scope-dependent
      yyparse();
 
-     // check if declarations of a certain type are valid.
+     //link the prevs of the first elements of scopes
      linkBlocPrevs(globalScope);
+     // check if declarations of a certain type are valid.
      checkDeclarations(globalScope);
+     // checks if the types of the parameters actually exist.
+     // also check that there is only one definition of a function with a specific signature
      checkFunctionSignatures(globalScope);
+     // check if the variable that is assigned to was previously defined
      checkAssignments(globalScope);
+     // link the id with the corresponding variables
      setAssignments(globalScope);
 
      display(globalScope);

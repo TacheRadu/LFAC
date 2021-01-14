@@ -384,6 +384,10 @@ void checkExpression(struct expr_type *e, struct scope_entry *a){
                     printf("%s: not an array\n", it->var.id);
                     exit(-1);
                 }
+                if(it->var.isArray && it->var.dim <= e->var.indexNo){
+                    printf("%s[%d]: out of bounds index\n", it->var.id, e->var.indexNo);
+                    exit(-1);
+                }
                 if(it->var.isArray && !it->var.isSetElem[e->var.indexNo] || !it->var.isArray && !it->var.isSet){
                     printf("%s: cannot use uninitialized variable in expression\n", it->var.id);
                     exit(-1);

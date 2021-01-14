@@ -188,8 +188,8 @@ int main(int argc, char** argv){
      // check if the variable that is assigned to was previously defined
      checkAssignments(globalScope);
      // link the id with the corresponding variables
+     // also here check if variables in expression exist. If they do, link them as well
      setAssignments(globalScope);
-     // check if variables in expression exist
 
      display(globalScope);
 } 

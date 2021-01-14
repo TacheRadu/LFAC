@@ -199,9 +199,14 @@ int main(int argc, char** argv){
      // also here check if variables in expression exist. If they do, link them as well
      setAssignments(globalScope);
 
-     //printAssignmentResults(globalScope);
+     setControls(globalScope);
+     struct scope_entry *m = getMainFunction(globalScope);
+     if(m == NULL){
+          printf("No main function found\n");
+          exit(-1);
+     }
 
-     run(globalScope);
+     run(m->fun.scope);
 
      if(argc == 3 && strcmp(argv[1], "-p") == 0){
           FILE *f;

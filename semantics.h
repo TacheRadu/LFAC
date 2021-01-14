@@ -678,27 +678,90 @@ void run(struct scope* s){
         return;
     struct scope_entry *it = s->first_item;
     while(it != NULL){
-        if(it->tip == 1)
-            run(it->fun.scope);
-        if(it->tip == 2)
-            run(it->cls.scope);
         if(it->tip == 3){
             calculate_exp(it->assignment.expression);
             assignVal(it);
+            it = it->next;
         }
-        if(it->tip == 4){
-            run(it->if_s.scope);
-            if(it->if_s.else_scope != NULL)
-                run(it->if_s.scope);
+        else if(it->tip == 4){
+            calculate_exp(it->if_s.expression);
+            if(!it->if_s.expression->isString && it->if_s.expression->val != 0 || it->if_s.expression->isString)
+                it = it->if_s.pass;
+            else
+                it = it->if_s.fail;
         }
-        if(it->tip == 5)
-            run(it->while_s.scope);
-        if(it->tip == 7){
+        else if(it->tip == 5){
+            calculate_exp(it->while_s.expression);
+            if(!it->while_s.expression->isString && it->while_s.expression->val != 0 || it->while_s.expression->isString)
+                it = it->while_s.pass;
+            else
+                it = it->while_s.fail;
+
+        }
+        else if(it->tip == 7){
             checkExpression(it->eval_expr, it);
             calculate_exp(it->eval_expr);
             if(strcmp(it->eval_expr->tip, "int") == 0)
                 printf("%d\n", (int)it->eval_expr->val);
+            it = it->next;
+        }
+        else
+            it = it->next;
+    }
+}
+
+struct scope_entry* getMainFunction(struct scope *s){
+    if(s == NULL)
+        return NULL;
+    struct scope_entry *it = s->first_item;
+    while(it != NULL){
+        if(it->tip == 1 && strcmp(it->fun.id, "main") == 0 && it->fun.semnatura == NULL)
+            return it;
+        it = it->next;
+    }
+    return it;
+}
+
+void setControls(struct scope *s, struct scope_entry *limit = NULL){
+    if(s == NULL)
+        return;
+    struct scope_entry *it = s->first_item;
+    while(it != limit){
+        if(it->tip == 1)
+            setControls(it->fun.scope);
+        if(it->tip == 2)
+            setControls(it->cls.scope);
+        if(it->tip == 4){
+            printf("Seteaza la if\n");
+            it->if_s.pass = it->if_s.scope->first_item;
+            struct scope_entry *e = it->if_s.scope->first_item;
+            while(e->next != NULL)
+                e = e->next;
+            e->next = it->next;
+            if(it->if_s.else_scope != NULL){
+                it->if_s.fail = it->if_s.else_scope->first_item;
+                e = it->if_s.else_scope->first_item;
+                while(e->next != NULL)
+                    e = e->next;
+                e->next = it->next;
+            } 
+            else
+                it->if_s.fail = it->next;
+            setControls(it->if_s.scope, it->next);
+            if(it->if_s.else_scope != NULL)
+                setControls(it->if_s.else_scope, it->next);
+        }
+        if(it->tip == 5){
+            printf("Seteaza la while\n");
+            it->while_s.pass = it->while_s.scope->first_item;
+            it->while_s.fail = it->next;
+            struct scope_entry *e = it->while_s.scope->first_item;
+            while(e->next != NULL)
+                e = e->next;
+            e->next = it;
+            setControls(it->while_s.scope, it);
         }
         it = it->next;
     }
+
 }

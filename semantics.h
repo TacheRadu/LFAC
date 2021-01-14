@@ -130,72 +130,72 @@ void add(struct scope_entry *t, struct scope_entry *s){
     s->prev = it;
 }
 
-void printSign(struct scope_entry *e){
+void printSign(FILE *f, struct scope_entry *e){
     struct sign *it = e->fun.semnatura;
     while(it != NULL){
-        printf("%s %s", it->tip, it->id);
+        fprintf(f, "%s %s", it->tip, it->id);
         if(it->next != NULL)
-            printf(", ");
+            fprintf(f, ", ");
         it = it->next;
     }
 }
 
-void display(struct scope *s, int tabs = 0){
+void print(FILE *f, struct scope *s, int tabs = 0){
     if(s == NULL)
         return;
     struct scope_entry *it = s->first_item;
     while(it != NULL){
         for(int i = 0; i < TAB_SIZE * tabs; i++)
-            printf(" ");
+            fprintf(f, " ");
         if(it->tip == 0){
             if(it->var.isConst)
-                printf("const ");
-            printf("%s %s;\n", it->var.tip, it->var.id);
+                fprintf(f, "const ");
+            fprintf(f, "%s %s;\n", it->var.tip, it->var.id);
         }
         if(it->tip == 1){
-            printf("%s %s(", it->fun.tip, it->fun.id);
-            printSign(it);
-            printf("){\n");
-            display(it->fun.scope, tabs + 1);
+            fprintf(f, "%s %s(", it->fun.tip, it->fun.id);
+            printSign(f, it);
+            fprintf(f, "){\n");
+            print(f, it->fun.scope, tabs + 1);
             for(int i = 0; i < TAB_SIZE * tabs; i++)
-                printf(" ");
-            printf("}\n");
+                fprintf(f, " ");
+            fprintf(f, "}\n");
         }
         if(it->tip == 2){
-            printf("class %s{\n", it->cls.id);
-            display(it->cls.scope, tabs + 1);
+            fprintf(f, "class %s{\n", it->cls.id);
+            print(f, it->cls.scope, tabs + 1);
             for(int i = 0; i < TAB_SIZE * tabs; i++)
-                printf(" ");
-            printf("};\n");
+                fprintf(f, " ");
+            fprintf(f, "};\n");
         }
         if(it->tip == 3){
-            printf("%s", it->assignment.var->var.id);
+            fprintf(f, "%s", it->assignment.var->var.id);
             if(it->assignment.isArray)
-                printf("[%d]", it->assignment.index);
-            printf(" = smth\n");
+                fprintf(f, "[%d]", it->assignment.index);
+            fprintf(f, " = smth\n");
         }
         if(it->tip == 4){
-            printf("if(){\n");
-            display(it->if_s.scope, tabs + 1);
+            fprintf(f, "if(){\n");
+            print(f, it->if_s.scope, tabs + 1);
             for(int i = 0; i < TAB_SIZE * tabs; i++)
-                printf(" ");
-            printf("}\n");
+                fprintf(f, " ");
+            fprintf(f, "}\n");
             if(it->if_s.else_scope != NULL){
                 for(int i = 0; i < TAB_SIZE * tabs; i++)
-                    printf(" ");
-                printf("else{\n");
-                display(it->if_s.else_scope, tabs + 1);
+                    fprintf(f, " ");
+                fprintf(f, "else{\n");
+                print(f, it->if_s.else_scope, tabs + 1);
                 for(int i = 0; i < TAB_SIZE * tabs; i++)
-                    printf(" ");
-                printf("}\n");
+                    fprintf(f, " ");
+                fprintf(f, "}\n");
             }
         }
         if(it->tip == 5){
-            printf("while(){\n");
-            display(it->while_s.scope, tabs + 1);
+            fprintf(f, "while(){\n");
+            print(f, it->while_s.scope, tabs + 1);
             for(int i = 0; i < TAB_SIZE * tabs; i++)
-                printf(" ");
-            printf("}\n");
+                fprintf(f, " ");
+            fprintf(f, "}\n");
         }
         it = it->next;
     }

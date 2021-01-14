@@ -174,7 +174,10 @@ printf("eroare: %s la linia:%d\n",s,yylineno);
 }
 
 int main(int argc, char** argv){
-     yyin=fopen(argv[1],"r");
+     if(argc == 2)
+          yyin=fopen(argv[1],"r");
+     if(argc == 3)
+          yyin = fopen(argv[2], "r");
      // redeclarations are checked here, since declarations are scope-dependent
      yyparse();
 
@@ -191,5 +194,10 @@ int main(int argc, char** argv){
      // also here check if variables in expression exist. If they do, link them as well
      setAssignments(globalScope);
 
-     display(globalScope);
+     if(argc == 3 && strcmp(argv[1], "-p") == 0){
+          FILE *f;
+          f = fopen("sym_table.txt", "w");
+          print(f, globalScope);
+          fclose(f);
+     }
 } 

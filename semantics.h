@@ -106,11 +106,7 @@ void push(struct scope_entry *e, char* id){
 }
 
 void push(struct scope_entry *e, char* id, int dim){
-    struct scope_entry* new_entry = (struct scope_entry*) malloc(sizeof(struct scope_entry));
-    new_entry->tip = 0;
-    new_entry->var.id = strdup(id);
-    new_entry->var.isArray = 1;
-    new_entry->var.dim = dim;
+    struct scope_entry* new_entry = entry(id, dim);
     struct scope_entry* it = e;
     while(it->next != NULL)
         it = it->next;
@@ -309,11 +305,11 @@ void checkVariable(struct scope_entry *e){
     while(it != NULL){
         if(it->tip == 0 && strcmp(e->assignment.id, it->var.id) == 0){
             if(it->var.isArray && !e->assignment.isArray){
-                printf("%s: not an array!\n", it->var.id);
+                printf("%s: cannot assign expression to an array type\n", it->var.id);
                 exit(-1);
             }
             if(e->assignment.isArray && !it->var.isArray){
-                printf("%s: cannot access element of non-array type\n", it->var.id);
+                printf("%s: cannot assign element of non-array type\n", it->var.id);
                 exit(-1);
             }
             f = 1;
@@ -354,10 +350,66 @@ void setAssignment(struct scope_entry *a){
     while(it != NULL){
         if(it->tip == 0 && strcmp(it->var.id, a->assignment.id) == 0){
             a->assignment.var = it;
+            if(it->var.isConst && it->var.isSet){
+                printf("%s: cannot assign to constant value\n", it->var.id);
+                exit(-1);
+            }
+            if(it->var.isArray){
+                if(a->assignment.index >= it->var.dim){
+                    printf("%s[%d]: Out of bounds index\n", it->var.id, a->assignment.index);
+                    exit(-1);
+                }
+                it->var.isSetElem[a->assignment.index] = true;
+            }
+            if(!it->var.isArray)
+                it->var.isSet = true;
             return;
         }
         it = it->prev;
     }
+}
+
+void checkExpression(struct expr_type *e, struct scope_entry *a){
+    if(e->isVar){
+        struct scope_entry *it = a->prev;
+        bool f = 0;
+        while(it != NULL){
+            if(it->tip == 0 && strcmp(it->var.id, e->var.id) == 0){
+                f = 1;
+                if(it->var.isArray && !e->var.isArr){
+                    printf("%s: cannot assign array value in expression\n", it->var.id);
+                    exit(-1);
+                }
+                if(!it->var.isArray && e->var.isArr){
+                    printf("%s: not an array\n", it->var.id);
+                    exit(-1);
+                }
+                if(it->var.isArray && !it->var.isSetElem[e->var.indexNo] || !it->var.isArray && !it->var.isSet){
+                    printf("%s: cannot use uninitialized variable in expression\n", it->var.id);
+                    exit(-1);
+                }
+                e->var.var = it;
+                if(strcmp(it->var.tip, "string") == 0){
+                    e->isString = true;
+                }
+                break;
+            }
+            it = it->prev;
+        }
+        if(!f){
+            printf("%s: undefined variable\n", e->var.id);
+            exit(-1);
+        }
+    }
+    if(!e->isVar && !e->isString && e->exp.left != NULL){
+        if(e->exp.op == 12)
+            checkExpression(e->exp.left, a);
+        else{
+            checkExpression(e->exp.left, a);
+            checkExpression(e->exp.right, a);
+        }
+    }
+
 }
 
 void setAssignments(struct scope *s){
@@ -365,8 +417,10 @@ void setAssignments(struct scope *s){
         return;
     struct scope_entry *it = s->first_item;
     while(it != NULL){
-        if(it->tip == 3)
+        if(it->tip == 3){
             setAssignment(it);
+            checkExpression(it->assignment.expression, it);
+        }
         if(it->tip == 1)
             setAssignments(it->fun.scope);
         if(it->tip == 2)
@@ -409,64 +463,4 @@ void linkBlocPrevs(struct scope* s){
         it = it->next;
     }
 
-}
-
-void checkExpression(struct expr_type *e, struct scope_entry *a){
-    if(e->isVar){
-        struct scope_entry *it = a->prev;
-        bool f = 0;
-        while(it != NULL){
-            if(it->tip == 0 && strcmp(it->var.id, e->var.id) == 0){
-                f = 1;
-                if(it->var.isArray && !e->var.isArr){
-                    printf("%s: Cannot assign array value in expression\n", it->var.id);
-                    exit(-1);
-                }
-                if(!it->var.isArray && e->var.isArr){
-                    printf("%s: Not an array\n", it->var.id);
-                    exit(-1);
-                }
-                e->var.var = it;
-                if(strcmp(it->var.tip, "string") == 0){
-                    e->isString = true;
-                }
-            }
-            it = it->prev;
-        }
-        if(!f){
-            printf("%s: undefined variable\n", e->var.id);
-            exit(-1);
-        }
-    }
-    if(!e->isVar && !e->isString && e->exp.left != NULL){
-        if(e->exp.op == 12)
-            checkExpression(e->exp.left, a);
-        else{
-            checkExpression(e->exp.left, a);
-            checkExpression(e->exp.right, a);
-        }
-    }
-
-}
-
-void checkExpressions(struct scope *s){
-    if(s == NULL)
-        return;
-    struct scope_entry *it = s->first_item;
-    while(it != NULL){
-        if(it->tip == 1)
-            checkExpressions(it->fun.scope);
-        if(it->tip == 2)
-            checkExpressions(it->cls.scope);
-        if(it->tip == 3)
-            checkExpression(it->assignment.expression, it);
-        if(it->tip == 4){
-            checkExpressions(it->if_s.scope);
-            checkExpressions(it->if_s.else_scope);
-        }
-        if(it->tip == 5)
-            checkExpressions(it->while_s.scope);
-
-        it = it->next;
-    }
 }

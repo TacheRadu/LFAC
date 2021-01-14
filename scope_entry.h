@@ -81,6 +81,7 @@ struct scope_entry* entry(char* id){
     e->var.tip = NULL;
     e->tip = 0;
     e->var.isArray = 0;
+    e->var.isSet = false;
     return e;
 }
 struct scope_entry* entry(char* id, int dim){
@@ -90,8 +91,11 @@ struct scope_entry* entry(char* id, int dim){
     e->var.id = strdup(id);
     e->var.tip = NULL;
     e->tip = 0;
-    e->var.isArray = 1;
+    e->var.isArray = true;
     e->var.dim = dim;
+    e->var.isSetElem = (bool*) malloc(sizeof(bool) * dim);
+    for(int i = 0; i < dim; i++)
+        e->var.isSetElem[i] = false;
     return e;
 }
 

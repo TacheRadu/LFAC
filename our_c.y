@@ -190,7 +190,6 @@ int main(int argc, char** argv){
      // link the id with the corresponding variables
      setAssignments(globalScope);
      // check if variables in expression exist
-     checkExpressions(globalScope);
 
      display(globalScope);
 } 

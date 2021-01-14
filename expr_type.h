@@ -82,6 +82,7 @@ struct expr_type* create_expr(char* id, bool isString = 0){
     if(isString){
         e->isVar = false;
         e->exp.left = NULL;
+        e->tip = strdup("string");
         e->sVal = strdup(id);
     }
     else{
@@ -107,7 +108,7 @@ struct expr_type* expr(struct expr_type *l, struct expr_type *r, int op){
     e->isString = false;
     e->exp.left = l;
     e->exp.right = r;
-    r->exp.op = op;
+    e->exp.op = op;
     return e;
 }
 

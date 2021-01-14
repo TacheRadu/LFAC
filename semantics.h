@@ -430,11 +430,14 @@ void setAssignments(struct scope *s){
         if(it->tip == 2)
             setAssignments(it->cls.scope);
         if(it->tip == 4){
+            checkExpression(it->if_s.expression, it);
             setAssignments(it->if_s.scope);
             setAssignments(it->if_s.else_scope);
         }
-        if(it->tip == 5)
+        if(it->tip == 5){
+            checkExpression(it->while_s.expression, it);
             setAssignments(it->while_s.scope);
+        }
         it = it->next;
     }
 }
@@ -467,4 +470,259 @@ void linkBlocPrevs(struct scope* s){
         it = it->next;
     }
 
+}
+
+void calculate_exp(struct expr_type *e){
+    if(!e->isVar && e->exp.left == NULL)
+        return;
+    if(!e->isVar && e->exp.left != NULL){
+        if(e->exp.op == 12){
+            calculate_exp(e->exp.left);
+            e->tip = strdup("bool");
+            e->val = !e->exp.left->val;
+        }
+        else{
+            calculate_exp(e->exp.left);
+            calculate_exp(e->exp.right);
+            if(e->exp.op != 7 && (e->exp.left->isString || e->exp.right->isString)){
+                printf("Invalid expression for string types\n");
+                exit(-1);
+            }
+            if(e->exp.op == 7 && (!e->exp.left->isString && e->exp.right->isString || e->exp.left->isString && !e->exp.right->isString)){
+                printf("Cannot compare string with non-string\n");
+                exit(-1);
+            }
+            char *maxType;
+            if(strcmp(e->exp.left->tip, "bool") == 0){
+                if(strcmp(e->exp.right->tip, "bool") == 0 || strcmp(e->exp.right->tip, "char") == 0 || strcmp(e->exp.right->tip, "int") == 0
+                        || strcmp(e->exp.right->tip, "float") == 0 || strcmp(e->exp.right->tip, "string") == 0)
+                    maxType = strdup(e->exp.right->tip);
+                else{
+                    printf("User defined data types cannot be part of an expression\n");
+                    exit(-1);
+                }
+            }
+            else if(strcmp(e->exp.left->tip, "char") == 0){
+                if(strcmp(e->exp.right->tip, "bool") == 0)
+                    maxType = strdup("char");
+                else if(strcmp(e->exp.right->tip, "char") == 0 || strcmp(e->exp.right->tip, "int") == 0
+                        || strcmp(e->exp.right->tip, "float") == 0 || strcmp(e->exp.right->tip, "string") == 0)
+                    maxType = strdup(e->exp.right->tip);
+                else{
+                    printf("User defined data types cannot be part of an expression\n");
+                    exit(-1);
+                }
+            }
+            else if(strcmp(e->exp.left->tip, "int") == 0){
+                if(strcmp(e->exp.right->tip, "bool") == 0 || strcmp(e->exp.right->tip, "char") == 0)
+                    maxType = strdup("int");
+                else if(strcmp(e->exp.right->tip, "int") == 0 || strcmp(e->exp.right->tip, "float") == 0
+                        || strcmp(e->exp.right->tip, "string") == 0)
+                    maxType = strdup(e->exp.right->tip);
+                else{
+                    printf("User defined data types cannot be part of an expression\n");
+                    exit(-1);
+                }
+            }
+            else if(strcmp(e->exp.left->tip, "float") == 0){
+                if(strcmp(e->exp.right->tip, "bool") == 0 || strcmp(e->exp.right->tip, "char") == 0 || strcmp(e->exp.right->tip, "int") == 0)
+                    maxType = strdup("float");
+                else if(strcmp(e->exp.right->tip, "float") == 0 || strcmp(e->exp.right->tip, "string") == 0)
+                    maxType = strdup(e->exp.right->tip);
+                else{
+                    printf("User defined data types cannot be part of an expression\n");
+                    exit(-1);
+                }
+            }
+            else{
+                maxType = strdup("string");
+                if(strcmp(e->exp.left->tip, "string") != 0 || strcmp(e->exp.right->tip, "string") != 0){
+                    printf("User defined data types cannot be part of an expression\n");
+                    exit(-1);
+                }
+            }
+
+            e->tip = strdup(maxType);
+            switch(e->exp.op){
+                case 1:
+                    e->val = e->exp.left->val + e->exp.right->val;
+                    break;
+                case 2:
+                    e->val = e->exp.left->val - e->exp.right->val;
+                    break;
+                case 3:
+                    e->val = e->exp.left->val * e->exp.right->val;
+                    break;
+                case 4:
+                    e->val = e->exp.left->val / e->exp.right->val;
+                    break;
+                case 5:
+                    e->tip = strdup("bool");
+                    e->val = (e->exp.left->val && e->exp.right->val);
+                    break;
+                case 6:
+                    e->tip = strdup("bool");
+                    e->val = (e->exp.left->val || e->exp.right->val);
+                    break;
+                case 7:
+                    e->tip = strdup("bool");
+                    if(e->exp.left->isString)
+                        e->val = (strcmp(e->exp.left->sVal, e->exp.right->sVal) == 0);
+                    else{
+                        e->val = (e->exp.left->val == e->exp.right->val);
+                    }
+                    break;
+                case 8:
+                    e->tip = strdup("bool");
+                    e->val = (e->exp.left->val < e->exp.right->val);
+                    break;
+                case 9:
+                    e->tip = strdup("bool");
+                    e->val = (e->exp.left->val <= e->exp.right->val);
+                    break;
+                case 10:
+                    e->tip = strdup("bool");
+                    e->val = (e->exp.left->val > e->exp.right->val);
+                    break;
+                case 11:
+                    e->tip = strdup("bool");
+                    e->val = (e->exp.left->val >= e->exp.right->val);
+                    break;
+            }
+
+        }
+    }
+    else{
+        if(e->var.isArr){
+            if(strcmp(e->var.var->var.tip, "string") == 0){
+                e->tip = strdup("string");
+                e->sVal = e->var.var->var.sValArr[e->var.indexNo];
+                return;
+            }
+            e->tip = strdup(e->var.var->var.tip);
+            if(strcmp(e->tip, "bool") == 0)
+                e->val = e->var.var->var.bValArr[e->var.indexNo];
+            else if(strcmp(e->tip, "char") == 0)
+                e->val = e->var.var->var.cValArr[e->var.indexNo];
+            else if(strcmp(e->tip, "int") == 0)
+                e->val = e->var.var->var.iValArr[e->var.indexNo];
+            else if(strcmp(e->tip, "float") == 0)
+                e->val = e->var.var->var.fValArr[e->var.indexNo];
+            else
+                e->val = e->var.var->var.classValArr[e->var.indexNo];
+        }
+        else{
+            if(strcmp(e->var.var->var.tip, "string") == 0){
+                e->tip = strdup("string");
+                e->sVal = e->var.var->var.sVal;
+                return;
+            }
+            e->tip = strdup(e->var.var->var.tip);
+            if(strcmp(e->tip, "bool") == 0)
+                e->val = e->var.var->var.bVal;
+            else if(strcmp(e->tip, "char") == 0)
+                e->val = e->var.var->var.cVal;
+            else if(strcmp(e->tip, "int") == 0)
+                e->val = e->var.var->var.iVal;
+            else if(strcmp(e->tip, "float") == 0)
+                e->val = e->var.var->var.fVal;
+            else
+                e->val = e->var.var->var.classVal;
+        }
+    }
+
+}
+
+void assignVal(struct scope_entry *a){
+    if(a->assignment.isArray){
+        if(strcmp(a->assignment.var->var.tip, a->assignment.expression->tip) != 0){
+            printf("%s: expression value does not match type\n", a->assignment.var->var.id);
+            exit(-1);
+        }
+        if(strcmp(a->assignment.var->var.tip, "bool") == 0)
+            a->assignment.var->var.bValArr[a->assignment.index] = a->assignment.expression->val;
+        if(strcmp(a->assignment.var->var.tip, "int") == 0)
+            a->assignment.var->var.iValArr[a->assignment.index] = a->assignment.expression->val;
+        if(strcmp(a->assignment.var->var.tip, "char") == 0)
+            a->assignment.var->var.cValArr[a->assignment.index] = a->assignment.expression->val;
+        if(strcmp(a->assignment.var->var.tip, "float") == 0)
+            a->assignment.var->var.fValArr[a->assignment.index] = a->assignment.expression->val;
+        if(strcmp(a->assignment.var->var.tip, "string") == 0)
+            a->assignment.var->var.sValArr[a->assignment.index] = strdup(a->assignment.expression->sVal);
+        else
+            a->assignment.var->var.classValArr[a->assignment.index] = a->assignment.expression->val;
+    }
+    else{
+        if(strcmp(a->assignment.var->var.tip, a->assignment.expression->tip) != 0){
+            printf("%s: expression value does not match type\n", a->assignment.var->var.id);
+            exit(-1);
+        }
+        if(strcmp(a->assignment.var->var.tip, "bool") == 0)
+            a->assignment.var->var.bVal = a->assignment.expression->val;
+        if(strcmp(a->assignment.var->var.tip, "int") == 0)
+            a->assignment.var->var.iVal = a->assignment.expression->val;
+        if(strcmp(a->assignment.var->var.tip, "char") == 0)
+            a->assignment.var->var.cVal = a->assignment.expression->val;
+        if(strcmp(a->assignment.var->var.tip, "float") == 0)
+            a->assignment.var->var.fVal = a->assignment.expression->val;
+        if(strcmp(a->assignment.var->var.tip, "string") == 0)
+            a->assignment.var->var.sVal = strdup(a->assignment.expression->sVal);
+        else
+            a->assignment.var->var.classVal = a->assignment.expression->val;
+
+    }
+}
+
+void printAssignmentResults(struct scope *s){
+    if(s == NULL)
+        return;
+    struct scope_entry *it = s->first_item;
+    while(it != NULL){
+        if(it->tip == 1)
+            printAssignmentResults(it->fun.scope);
+        if(it->tip == 2)
+            printAssignmentResults(it->cls.scope);
+        if(it->tip == 3){
+            calculate_exp(it->assignment.expression);
+            assignVal(it);
+            if(strcmp(it->assignment.var->var.tip, "int") == 0){
+                if(!it->assignment.isArray)
+                    printf("%s = %d\n", it->assignment.id, it->assignment.var->var.iVal);
+                else
+                    printf("%s[%d] = %d\n", it->assignment.id, it->assignment.index, it->assignment.var->var.iValArr[it->assignment.index]);
+            }
+            if(strcmp(it->assignment.var->var.tip, "bool") == 0){
+                if(!it->assignment.isArray)
+                    printf("%s = %d\n", it->assignment.id, it->assignment.var->var.bVal);
+                else
+                    printf("%s[%d] = %d\n", it->assignment.id, it->assignment.index, it->assignment.var->var.bValArr[it->assignment.index]);
+            }
+            if(strcmp(it->assignment.var->var.tip, "char") == 0){
+                if(!it->assignment.isArray)
+                    printf("%s = %c\n", it->assignment.id, it->assignment.var->var.cVal);
+                else
+                    printf("%s[%d] = %c\n", it->assignment.id, it->assignment.index, it->assignment.var->var.cValArr[it->assignment.index]);
+            }
+            if(strcmp(it->assignment.var->var.tip, "float") == 0){
+                if(!it->assignment.isArray)
+                    printf("%s = %f\n", it->assignment.id, it->assignment.var->var.fVal);
+                else
+                    printf("%s[%d] = %f\n", it->assignment.id, it->assignment.index, it->assignment.var->var.fValArr[it->assignment.index]);
+            }
+            if(strcmp(it->assignment.var->var.tip, "string") == 0){
+                if(!it->assignment.isArray)
+                    printf("%s = %s\n", it->assignment.id, it->assignment.var->var.sVal);
+                else
+                    printf("%s[%d] = %s\n", it->assignment.id, it->assignment.index, it->assignment.var->var.sValArr[it->assignment.index]);
+            }
+        }
+        if(it->tip == 4){
+            printAssignmentResults(it->if_s.scope);
+            if(it->if_s.else_scope != NULL)
+                printAssignmentResults(it->if_s.scope);
+        }
+        if(it->tip == 5)
+            printAssignmentResults(it->while_s.scope);
+        it = it->next;
+    }
 }

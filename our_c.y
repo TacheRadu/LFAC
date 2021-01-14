@@ -194,6 +194,8 @@ int main(int argc, char** argv){
      // also here check if variables in expression exist. If they do, link them as well
      setAssignments(globalScope);
 
+     printAssignmentResults(globalScope);
+
      if(argc == 3 && strcmp(argv[1], "-p") == 0){
           FILE *f;
           f = fopen("sym_table.txt", "w");

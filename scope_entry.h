@@ -16,6 +16,7 @@ struct scope_entry{
     // type = 4: IF
     // type = 5: WHILE
     // type = 6: F_CALL
+    // type = 7: EVAL
     union{
         struct {
             char *tip;
@@ -70,6 +71,7 @@ struct scope_entry{
             struct scope *scope;
             struct scope_entry *pass, *fail;
         }while_s;
+        struct expr_type *eval_expr;
     };
 };
 
@@ -249,4 +251,13 @@ struct scope_entry* whileEntry(struct expr_type *exp, struct scope *bloc){
     w->while_s.fail = NULL;
     w->while_s.pass = NULL;
     return w;
+}
+
+struct scope_entry* evalEntry(struct expr_type *exp){
+    struct scope_entry *ev = (struct scope_entry*) malloc(sizeof(struct scope_entry));
+    ev->tip = 7;
+    ev->prev = NULL;
+    ev->next = NULL;
+    ev->eval_expr = exp;
+    return ev;
 }

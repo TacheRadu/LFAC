@@ -16,7 +16,7 @@ void yyerror(const char *s);
 struct scope *globalScope;
 
 %}
-%token ID TIP LOGICAL_OPERATOR ASSIGN INTEGER_NR NATURAL_NR REAL_NR CHAR STRING BOOL CLASS CONST OR AND IF ELSE WHILE
+%token ID TIP LOGICAL_OPERATOR ASSIGN INTEGER_NR NATURAL_NR REAL_NR CHAR STRING BOOL CLASS CONST OR AND IF ELSE WHILE EVAL
 %start progr
 
 %right ASSIGN
@@ -47,7 +47,7 @@ struct scope *globalScope;
 %type <expr_t> expresie
 %type <scope_t> progr declaratii bloc bloc_clasa
 %type <sign_t> lista_semnatura membru_semnatura
-%type <scope_entry_t> declaratie_var declaratie_func declaratie_clasa corp_declaratie atribuire control if while
+%type <scope_entry_t> declaratie_var declaratie_func declaratie_clasa corp_declaratie atribuire control if while eval
 %%
 progr: declaratii {printf("%d : Done\n", yylineno); globalScope = $1;printf("program corect sintactic\n");}
      ;
@@ -92,10 +92,15 @@ bloc:  declaratie_var ';' {$$ = scopeFromEntry($1);}
      | atribuire ';' {$$ = scopeFromEntry($1);}
      | control {$$ = scopeFromEntry($1);}
      | apel_functie ';'
+     | eval ';' {$$ = scopeFromEntry($1);}
      | bloc declaratie_var ';' {push($1, $2); $$ = $1;}
      | bloc atribuire ';' {push($1, $2); $$ = $1;}
      | bloc control {push($1, $2); $$ = $1;}
      | bloc apel_functie ';'
+     | bloc eval ';' {push($1, $2); $$ = $1;}
+     ;
+
+eval: EVAL '(' expresie ')' {$$ = evalEntry($3);}
      ;
 
 apel_functie: ID '(' lista_parametri ')'
@@ -194,7 +199,9 @@ int main(int argc, char** argv){
      // also here check if variables in expression exist. If they do, link them as well
      setAssignments(globalScope);
 
-     printAssignmentResults(globalScope);
+     //printAssignmentResults(globalScope);
+
+     run(globalScope);
 
      if(argc == 3 && strcmp(argv[1], "-p") == 0){
           FILE *f;

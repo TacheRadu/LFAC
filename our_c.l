@@ -12,6 +12,7 @@
 "if" {yylval.string = strdup(yytext); return IF;}
 "else" {yylval.string = strdup(yytext); return ELSE;}
 "while" {yylval.string = strdup(yytext); return WHILE;};
+"Eval" {yylval.string = strdup(yytext); return EVAL;}
 "=="|"<"|">"|"<="|">=" {yylval.string = strdup(yytext); return LOGICAL_OPERATOR;}
 "=" {yylval.character = yytext[0]; return ASSIGN;}
 "||" {yylval.string = strdup(yytext); return OR;}

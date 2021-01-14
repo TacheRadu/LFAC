@@ -673,56 +673,32 @@ void assignVal(struct scope_entry *a){
     }
 }
 
-void printAssignmentResults(struct scope *s){
+void run(struct scope* s){
     if(s == NULL)
         return;
     struct scope_entry *it = s->first_item;
     while(it != NULL){
         if(it->tip == 1)
-            printAssignmentResults(it->fun.scope);
+            run(it->fun.scope);
         if(it->tip == 2)
-            printAssignmentResults(it->cls.scope);
+            run(it->cls.scope);
         if(it->tip == 3){
             calculate_exp(it->assignment.expression);
             assignVal(it);
-            if(strcmp(it->assignment.var->var.tip, "int") == 0){
-                if(!it->assignment.isArray)
-                    printf("%s = %d\n", it->assignment.id, it->assignment.var->var.iVal);
-                else
-                    printf("%s[%d] = %d\n", it->assignment.id, it->assignment.index, it->assignment.var->var.iValArr[it->assignment.index]);
-            }
-            if(strcmp(it->assignment.var->var.tip, "bool") == 0){
-                if(!it->assignment.isArray)
-                    printf("%s = %d\n", it->assignment.id, it->assignment.var->var.bVal);
-                else
-                    printf("%s[%d] = %d\n", it->assignment.id, it->assignment.index, it->assignment.var->var.bValArr[it->assignment.index]);
-            }
-            if(strcmp(it->assignment.var->var.tip, "char") == 0){
-                if(!it->assignment.isArray)
-                    printf("%s = %c\n", it->assignment.id, it->assignment.var->var.cVal);
-                else
-                    printf("%s[%d] = %c\n", it->assignment.id, it->assignment.index, it->assignment.var->var.cValArr[it->assignment.index]);
-            }
-            if(strcmp(it->assignment.var->var.tip, "float") == 0){
-                if(!it->assignment.isArray)
-                    printf("%s = %f\n", it->assignment.id, it->assignment.var->var.fVal);
-                else
-                    printf("%s[%d] = %f\n", it->assignment.id, it->assignment.index, it->assignment.var->var.fValArr[it->assignment.index]);
-            }
-            if(strcmp(it->assignment.var->var.tip, "string") == 0){
-                if(!it->assignment.isArray)
-                    printf("%s = %s\n", it->assignment.id, it->assignment.var->var.sVal);
-                else
-                    printf("%s[%d] = %s\n", it->assignment.id, it->assignment.index, it->assignment.var->var.sValArr[it->assignment.index]);
-            }
         }
         if(it->tip == 4){
-            printAssignmentResults(it->if_s.scope);
+            run(it->if_s.scope);
             if(it->if_s.else_scope != NULL)
-                printAssignmentResults(it->if_s.scope);
+                run(it->if_s.scope);
         }
         if(it->tip == 5)
-            printAssignmentResults(it->while_s.scope);
+            run(it->while_s.scope);
+        if(it->tip == 7){
+            checkExpression(it->eval_expr, it);
+            calculate_exp(it->eval_expr);
+            if(strcmp(it->eval_expr->tip, "int") == 0)
+                printf("%d\n", (int)it->eval_expr->val);
+        }
         it = it->next;
     }
 }

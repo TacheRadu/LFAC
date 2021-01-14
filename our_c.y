@@ -60,8 +60,8 @@ declaratii: declaratie_var ';' { printf("%d : Declaratie variabila\n", yylineno)
 
 declaratie_var: TIP corp_declaratie {printf("%d : Declaratie\n", yylineno); set_tip($2, $1); $$ = $2;}
           | CONST TIP atribuire_in_declaratie {printf("%d : Declaratie const\n", yylineno); $3->var.isConst = 1; $3->var.tip = strdup($2); $$ = $3;}
-          | ID corp_declaratie  {printf("%d : Declaratie class obj\n", yylineno); printf("Data type not defined\n(Line %d)\n", yylineno); exit('0' - '1');} 
-          | CONST ID atribuire_in_declaratie
+          | ID corp_declaratie  {set_tip($2, $1); $$ = $2;} 
+          | CONST ID atribuire_in_declaratie {$3->var.isConst = 1; $3->var.tip = strdup($2); $$ = $3;}
           ;
 
 declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2, $4, $7);}
@@ -72,16 +72,18 @@ declaratie_func: TIP ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2,
                | CONST TIP ID '(' lista_semnatura ')' '{' '}' {$$ = entry($2, $3, $5, 1);}
                | CONST TIP ID '(' ')' '{' bloc '}' {$$ = entry($2, $3, $7, 1);}
                | CONST TIP ID '(' ')' '{' '}' {$$ = entry($2, $3, 1);}
-               | ID ID '(' lista_semnatura ')' '{' bloc '}'
-               | ID ID '(' ')' '{' bloc '}'
-               | ID ID '(' ')' '{' '}'
-               | CONST ID ID '(' lista_semnatura ')' '{' bloc '}'
-               | CONST ID ID '(' ')' '{' bloc '}'
-               | CONST ID ID '(' ')' '{' '}'
+               | ID ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($1, $2, $4, $7);}
+               | ID ID '(' lista_semnatura ')' '{' '}' {$$ = entry($1, $2, $4);}
+               | ID ID '(' ')' '{' bloc '}' {$$ = entry($1, $2, $6);}
+               | ID ID '(' ')' '{' '}' {$$ = entry($1, $2);}
+               | CONST ID ID '(' lista_semnatura ')' '{' bloc '}' {$$ = entry($2, $3, $5, $8, 1);}
+               | CONST ID ID '(' lista_semnatura ')' '{' '}' {$$ = entry($2, $3, $5, 1);}
+               | CONST ID ID '(' ')' '{' bloc '}' {$$ = entry($2, $3, $7, 1);}
+               | CONST ID ID '(' ')' '{' '}' {$$ = entry($2, $3, 1);}
                ;
 
-declaratie_clasa: CLASS ID '{' bloc_clasa '}'
-               |  CLASS ID '{' '}'
+declaratie_clasa: CLASS ID '{' bloc_clasa '}' {$$ = classEntry($2, $4);}
+               |  CLASS ID '{' '}' {$$ = classEntry($2);}
                ;
 
 bloc:  declaratie_var ';' {$$ = scopeFromEntry($1);}
@@ -117,10 +119,10 @@ if: IF '(' expresie ')' '{' bloc '}'
 while: WHILE '(' expresie ')' '{' bloc '}'
      ;
 
-bloc_clasa: declaratie_func
-          | declaratie_var ';'
-          | bloc_clasa declaratie_func
-          | bloc_clasa declaratie_var ';'
+bloc_clasa: declaratie_func {$$ = scopeFromEntry($1);}
+          | declaratie_var ';' {$$ = scopeFromEntry($1);}
+          | bloc_clasa declaratie_func {push($1, $2); $$ = $1;}
+          | bloc_clasa declaratie_var ';' {push($1, $2), $$ = $1;}
           ;
 
 lista_semnatura: membru_semnatura {$$ = $1;}
@@ -129,8 +131,8 @@ lista_semnatura: membru_semnatura {$$ = $1;}
 
 membru_semnatura: TIP ID {$$ = signEntry($1, $2);}
                |  CONST TIP ID {$$ = signEntry($2, $3, 1);}
-               |  ID ID
-               | CONST ID ID
+               |  ID ID {$$ = signEntry($1, $2);}
+               | CONST ID ID {$$ = signEntry($2, $3, 1);}
                ;
 
 corp_declaratie: ID {printf("%d : Corp declaratie\n", yylineno); $$ = entry($1);}
@@ -146,7 +148,7 @@ expresie:  REAL_NR {$$ = create_expr($1);}
           | NATURAL_NR {$$ = create_expr($1);}
           | BOOL {$$ = create_expr($1, 0);}
           | CHAR {$$ = create_expr($1);}
-          | ID {}
+          | ID
           | expresie '+' expresie {$$ = expr_aritm($1, $3, $<character>2);}
           | expresie '-' expresie {$$ = expr_aritm($1, $3, $<character>2);}
           | expresie '*' expresie {$$ = expr_aritm($1, $3, $<character>2);}
@@ -178,6 +180,8 @@ int main(int argc, char** argv){
      yyin=fopen(argv[1],"r");
 
      yyparse();
+
+     check(globalScope);
 
      display(globalScope);
 } 

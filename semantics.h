@@ -87,8 +87,6 @@ void push(struct scope *s, struct scope_entry *e){
     }
     it->next = e;
     e->prev = it;
-    if(e->tip == 3)
-        e->scope->prev = it;
 }
 
 void push(struct scope_entry *e, char* id){
@@ -134,7 +132,19 @@ void add(struct scope_entry *t, struct scope_entry *s){
     s->prev = it;
 }
 
+void printSign(struct scope_entry *e){
+    struct sign *it = e->fun.semnatura;
+    while(it != NULL){
+        printf("%s %s", it->tip, it->id);
+        if(it->next != NULL)
+            printf(", ");
+        it = it->next;
+    }
+}
+
 void display(struct scope *s, int tabs = 0){
+    if(s == NULL)
+        return;
     struct scope_entry *it = s->first_item;
     while(it != NULL){
         for(int i = 0; i < TAB_SIZE * tabs; i++)
@@ -145,11 +155,90 @@ void display(struct scope *s, int tabs = 0){
             printf("%s %s;\n", it->var.tip, it->var.id);
         }
         if(it->tip == 1){
-            printf("%s %s()\n", it->fun.tip, it->fun.id);
+            printf("%s %s(", it->fun.tip, it->fun.id);
+            printSign(it);
+            printf("){\n");
+            display(it->fun.scope, tabs + 1);
+            for(int i = 0; i < TAB_SIZE * tabs; i++)
+                printf(" ");
+            printf("}\n");
         }
-        if(it->tip == 3){
-            display(it->scope, tabs+1);
+        if(it->tip == 2){
+            printf("class %s{\n", it->cls.id);
+            display(it->cls.scope, tabs + 1);
+            for(int i = 0; i < TAB_SIZE * tabs; i++)
+                printf(" ");
+            printf("};\n");
         }
+        it = it->next;
+    }
+}
+
+bool notStdType(char *tip){
+    if(strcmp(tip, "int") == 0)
+        return 0;
+    if(strcmp(tip, "char") == 0)
+        return 0;
+    if(strcmp(tip, "string") == 0)
+        return 0;
+    if(strcmp(tip, "bool") == 0)
+        return 0;
+    if(strcmp(tip, "float") == 0)
+        return 0;
+    return 1;
+}
+
+bool lookForClass(struct scope_entry *v){
+    struct scope_entry *it = v->prev;
+    while(it != NULL){
+        if(it->tip == 2 &&
+          (v->tip == 0 && strcmp(it->cls.id, v->var.tip) == 0) ||
+          (v->tip == 1 && strcmp(it->cls.id, v->fun.tip) == 0))
+          return 1;
+        it = it->prev;
+    }
+    return 0;
+
+}
+
+void checkSign(struct scope_entry *e){
+    struct sign *s = e->fun.semnatura;
+    while(s != NULL){
+        bool f = 0;
+        struct scope_entry *it = e->prev;
+        while(it != NULL){
+            if(!notStdType(s->tip))
+                f = 1;
+            if(it->tip == 2 && strcmp(it->cls.id, s->tip) == 0){
+                f = 1;
+                break;
+            }
+            it = it->prev;
+        }
+        if(!f){
+            printf("%s: No such type\n", s->tip);
+            exit(-1);
+        }
+        s = s->next;
+    }
+}
+
+void check(struct scope *s){
+    if(s == NULL)
+        return;
+    struct scope_entry *it = s->first_item;
+    while(it != NULL){
+        // check type of variables and functions
+        if((it->tip == 0 && notStdType(it->var.tip) && !lookForClass(it)) ||
+           (it->tip == 1 && notStdType(it->fun.tip) && !lookForClass(it))){
+            printf("%s: No such type\n", it->var.tip);
+            exit(-1);
+        }
+
+        //check type of function parameters;
+        if(it->tip == 1)
+            checkSign(it);
+
         it = it->next;
     }
 }

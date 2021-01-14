@@ -16,12 +16,12 @@
 "=" {yylval.character = yytext[0]; return ASSIGN;}
 "||" {yylval.string = strdup(yytext); return OR;}
 "&&" {yylval.string = strdup(yytext); return AND;}
+\".*\" {yylval.string = strdup(yytext); return STRING;}
 [_a-zA-Z][_a-zA-Z0-9]* {yylval.string = strdup(yytext); return ID;}
 [0-9]|[1-9][0-9]+ {yylval.nr_i = atoi(yytext); return NATURAL_NR;}
 -[1-9][0-9]* {yylval.nr_i = atoi(yytext); return INTEGER_NR;}
 ([0-9]|[1-9][0-9]+).[0-9][0-9]* {yylval.nr_f = atof(yytext); return REAL_NR;}
-\'[0-9a-zA-Z_=+\[\]{};':",./<>?-]\' {yylval.character = yytext[1]; return CHAR;}
-\"[0-9a-zA-Z_=+\[\]{};':",./<>?-]*\" {yylval.string = strdup(yytext); return STRING;}
+\'.*\' {yylval.character = yytext[1]; return CHAR;}
 [ \t] ;
 \n {yylineno++;}
 . {return yytext[0];}

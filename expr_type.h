@@ -81,6 +81,7 @@ struct expr_type* create_expr(char* id, bool isString = 0){
     e->isString = isString;
     if(isString){
         e->isVar = false;
+        e->exp.left = NULL;
         e->sVal = strdup(id);
     }
     else{
@@ -103,6 +104,7 @@ struct expr_type* create_expr(char* id, int dim){
 struct expr_type* expr(struct expr_type *l, struct expr_type *r, int op){
     struct expr_type *e = (struct expr_type*) malloc(sizeof(struct expr_type));
     e->isVar = false;
+    e->isString = false;
     e->exp.left = l;
     e->exp.right = r;
     r->exp.op = op;
@@ -112,6 +114,7 @@ struct expr_type* expr(struct expr_type *l, struct expr_type *r, int op){
 struct expr_type* expr_negate(struct expr_type *toNegate){
     struct expr_type *n = (struct expr_type*) malloc(sizeof(struct expr_type));
     n->isVar = false;
+    n->isString = false;
     n->exp.left = NULL;
     n->tip = strdup("bool"); // because we always promote the type of the expression. Therefore let's give it the "smallest" one
     n->val = -1;
@@ -121,6 +124,7 @@ struct expr_type* expr_negate(struct expr_type *toNegate){
 struct expr_type* expr(struct expr_type *l, struct expr_type *r, char *op){
     struct expr_type *e = (struct expr_type*) malloc(sizeof(struct expr_type));
     e->isVar = false;
+    e->isString = false;
     e->exp.left = l;
     e->exp.right = r;
     if(strcmp(op, "==") == 0)
@@ -139,6 +143,7 @@ struct expr_type* expr(struct expr_type *l, struct expr_type *r, char *op){
 struct expr_type* expr_negation(struct expr_type *l){
     struct expr_type *e = (struct expr_type*) malloc(sizeof(struct expr_type));
     e->isVar = false;
+    e->isString = false;
     e->exp.left = l;
     e->exp.op = 12;
     return e;

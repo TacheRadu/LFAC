@@ -150,7 +150,7 @@ expresie:  REAL_NR {$$ = create_expr($1);}
           | NATURAL_NR {$$ = create_expr($1);}
           | BOOL {$$ = create_expr($1);}
           | CHAR {$$ = create_expr($1);}
-          | STRING {$$ = create_expr($1, 1);}
+          | STRING {$$ = create_expr($1, true);}
           | ID {$$ = create_expr($1);}
           | ID '[' NATURAL_NR ']' {$$ = create_expr($1, $3);}
           | expresie '+' expresie {$$ = expr($1, $3, 1);}
@@ -189,6 +189,8 @@ int main(int argc, char** argv){
      checkAssignments(globalScope);
      // link the id with the corresponding variables
      setAssignments(globalScope);
+     // check if variables in expression exist
+     checkExpressions(globalScope);
 
      display(globalScope);
 } 

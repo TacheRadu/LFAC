@@ -410,3 +410,63 @@ void linkBlocPrevs(struct scope* s){
     }
 
 }
+
+void checkExpression(struct expr_type *e, struct scope_entry *a){
+    if(e->isVar){
+        struct scope_entry *it = a->prev;
+        bool f = 0;
+        while(it != NULL){
+            if(it->tip == 0 && strcmp(it->var.id, e->var.id) == 0){
+                f = 1;
+                if(it->var.isArray && !e->var.isArr){
+                    printf("%s: Cannot assign array value in expression\n", it->var.id);
+                    exit(-1);
+                }
+                if(!it->var.isArray && e->var.isArr){
+                    printf("%s: Not an array\n", it->var.id);
+                    exit(-1);
+                }
+                e->var.var = it;
+                if(strcmp(it->var.tip, "string") == 0){
+                    e->isString = true;
+                }
+            }
+            it = it->prev;
+        }
+        if(!f){
+            printf("%s: undefined variable\n", e->var.id);
+            exit(-1);
+        }
+    }
+    if(!e->isVar && !e->isString && e->exp.left != NULL){
+        if(e->exp.op == 12)
+            checkExpression(e->exp.left, a);
+        else{
+            checkExpression(e->exp.left, a);
+            checkExpression(e->exp.right, a);
+        }
+    }
+
+}
+
+void checkExpressions(struct scope *s){
+    if(s == NULL)
+        return;
+    struct scope_entry *it = s->first_item;
+    while(it != NULL){
+        if(it->tip == 1)
+            checkExpressions(it->fun.scope);
+        if(it->tip == 2)
+            checkExpressions(it->cls.scope);
+        if(it->tip == 3)
+            checkExpression(it->assignment.expression, it);
+        if(it->tip == 4){
+            checkExpressions(it->if_s.scope);
+            checkExpressions(it->if_s.else_scope);
+        }
+        if(it->tip == 5)
+            checkExpressions(it->while_s.scope);
+
+        it = it->next;
+    }
+}
